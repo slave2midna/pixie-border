@@ -162,7 +162,7 @@ Hooks.on("canvasReady", () => {
     refreshToken(t);
   }
 
-  ui.notifications?.info?.("Pixie Border enabled (PIXI Outline; Hide Default Border fixed toggle).");
+  ui.notifications?.info?.("Pixie Border (PIXI Outline) enabled.");
 });
 
 Hooks.once("shutdown", () => {
@@ -179,3 +179,4 @@ Hooks.once("shutdown", () => {
   Handlers._installed = false;
 
 });
+
