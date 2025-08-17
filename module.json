@@ -2,7 +2,7 @@
   "id": "pixie-border",
   "title": "Pixie Border",
   "description": "Flat hover/selection outline that conforms to token alpha, instead of the default foundry square borders.",
-  "version": "#{VERSION}#",
+  "version": "0.0.0-dev",
   "library": false,
 
   "compatibility": {
