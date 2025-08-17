@@ -8,7 +8,7 @@ const OUTLINE_PADDING = 0;
 
 function getRenderable(token) { return token?.mesh ?? token?.icon ?? null; }
 
-// ---- settings getters ----
+// Setting getters
 function getMode()         { return game.settings.get(MODULE_ID, "mode"); }
 function getCustomColor()  { return game.settings.get(MODULE_ID, "customColor"); }
 function getThickness()    {
@@ -18,7 +18,7 @@ function getThickness()    {
 }
 function getHideDefault()  { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); } // client-scope
 
-// ---- color helpers ----
+// Color helpers
 function cssToInt(color) {
   try { if (typeof color === "string" && foundry?.utils?.colorStringToHex) return foundry.utils.colorStringToHex(color); } catch {}
   if (typeof color === "number" && Number.isFinite(color)) return color >>> 0;
@@ -36,7 +36,7 @@ function cssToInt(color) {
   return 0xffffff;
 }
 
-// Foundry v13 disposition map
+// Foundry disposition map
 const DISP_MAP = { [-1]:0xe74c3c, [0]:0xf1c40f, [1]:0x2ecc71, [2]:0x3498db, [3]:0x9b59b6 };
 
 function dispositionColorInt(token) {
@@ -49,7 +49,7 @@ function resolvedColorInt(token) {
   return (getMode() === "custom") ? cssToInt(getCustomColor()) : dispositionColorInt(token);
 }
 
-// ---- filter ops (unchanged outline logic) ----
+// Outline PIXI filter operations
 function applyOutline(token, colorInt) {
   const mesh = getRenderable(token);
   if (!mesh) return;
@@ -82,18 +82,15 @@ function removeOutline(token) {
   mesh.refresh?.();
 }
 
-// ---- native Foundry border visibility control ----
+// ---- Foundry border visibility controls ----
 function hideNativeBorder(token) {
   const b = token?.border;
   if (!b) return;
-  // Strong hide: prevent rendering and nuke current stroke
   b.renderable = false;
   b.visible = false;
   b.alpha = 0;
   if (typeof b.clear === "function") b.clear();
 }
-// IMPORTANT: when the setting is OFF, do not force any values;
-// let Foundry manage visibility based on hover/selection again.
 function applyNativeBorderVisibility(token) {
   if (getHideDefault()) hideNativeBorder(token);
 }
@@ -107,11 +104,9 @@ function refreshToken(token) {
     if (f) { f.thickness = getThickness(); f.color = resolvedColorInt(token); }
   } else if (!show && token[FILTER_ON]) removeOutline(token);
 
-  // Enforce native border hide only when the setting is enabled
   applyNativeBorderVisibility(token);
 }
 
-// ---- hooks ----
 const Handlers = {};
 
 Hooks.on("canvasReady", () => {
@@ -135,30 +130,24 @@ Hooks.on("canvasReady", () => {
     if (t) refreshToken(t);
   });
 
-  // React to our settings changing (mode/customColor/thickness/hideDefaultBorder)
   Handlers.updateSetting = Hooks.on("updateSetting", (setting) => {
     if (!setting?.key?.startsWith?.(`${MODULE_ID}.`)) return;
 
-    // If hideDefaultBorder toggled, either hide now or restore via token refresh
     if (setting.key === `${MODULE_ID}.hideDefaultBorder`) {
       const hide = !!setting.value;
       for (const t of canvas.tokens?.placeables ?? []) {
         if (hide) {
           hideNativeBorder(t);
         } else {
-          // Restore to Foundry defaults by asking it to redraw
-          // (don't force visible=true; let core decide)
           t.border && (t.border.renderable = true, t.border.alpha = 1, t.border.visible = true);
           t.refresh?.();
         }
       }
     } else {
-      // other settings: just refresh our outline parameters
       for (const t of canvas.tokens?.placeables ?? []) refreshToken(t);
     }
   });
 
-  // After Foundry redraws a token, if the setting is ON, stomp the border again
   Handlers.refreshToken = Hooks.on("refreshToken", (token) => {
     if (getHideDefault()) hideNativeBorder(token);
   });
@@ -168,7 +157,6 @@ Hooks.on("canvasReady", () => {
     if (t) removeOutline(t);
   });
 
-  // Initial pass
   for (const t of canvas.tokens?.placeables ?? []) {
     t[HOVER_KEY] = !!t?.hover;
     refreshToken(t);
@@ -189,4 +177,5 @@ Hooks.once("shutdown", () => {
   for (const t of canvas.tokens?.placeables ?? []) removeOutline(t);
   Object.keys(Handlers).forEach(k => delete Handlers[k]);
   Handlers._installed = false;
+
 });
