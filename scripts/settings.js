@@ -46,4 +46,37 @@ Hooks.once("init", () => {
     default: false,
     requiresReload: true 
   });
+
+  // Enable border glow
+  game.settings.register(MODULE_ID, "enableGlow", {
+    name: "Enable glow",
+    hint: "If enabled, tokens will also get a soft PIXI glow that follows the outline color.",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: false
+  });
+
+  // Glow distance (pixels)
+  game.settings.register(MODULE_ID, "glowDistance", {
+    name: "Glow distance",
+    hint: "Glow radius in pixels. Larger values expand the glow outward.",
+    scope: "world",
+    config: true,
+    type: Number,
+    default: 10,
+    range: { min: 1, max: 64, step: 1 }
+  });
+
+  // Glow strength
+  game.settings.register(MODULE_ID, "glowOuterStrength", {
+    name: "Glow outer strength",
+    hint: "Intensity of the outer glow. Higher values are brighter.",
+    scope: "world",
+    config: true,
+    type: Number,
+    default: 4,
+    range: { min: 0, max: 10, step: 0.5 }
+  });
+
 });
