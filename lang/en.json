@@ -1,3 +1,38 @@
 {
-    "MODULE.hello": "hello"
+  "pixie-border": {
+    "settings": {
+      "mode": {
+        "name": "Border color mode",
+        "hint": "Use Foundry disposition colors or a custom color.",
+        "choices": {
+          "disposition": "Disposition colors",
+          "custom": "Custom color"
+        }
+      },
+      "customColor": {
+        "name": "Custom color (hex or CSS)",
+        "hint": "Used only when Color mode = Custom. Examples: #88ccff or rgb(136,204,255)."
+      },
+      "thickness": {
+        "name": "Border thickness",
+        "hint": "Outline thickness in pixels."
+      },
+      "hideDefaultBorder": {
+        "name": "Hide Default Foundry Border",
+        "hint": "Hide Foundry’s built-in selection border on tokens (client-side)."
+      },
+      "enableGlow": {
+        "name": "Enable glow",
+        "hint": "If enabled, tokens will also get a soft PIXI glow that follows the outline color."
+      },
+      "glowDistance": {
+        "name": "Glow distance",
+        "hint": "Glow radius in pixels. Larger values expand the glow outward."
+      },
+      "glowOuterStrength": {
+        "name": "Glow outer strength",
+        "hint": "Intensity of the outer glow. Higher values are brighter."
+      }
+    }
+  }
 }
