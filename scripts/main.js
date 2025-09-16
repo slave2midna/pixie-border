@@ -217,8 +217,6 @@ Hooks.on("canvasReady", () => {
     t[HOVER_KEY] = !!t?.hover;
     refreshToken(t);
   }
-
-  ui.notifications?.info?.("Pixie Border (PIXI Outline) enabled.");
 });
 
 Hooks.once("shutdown", () => {
@@ -235,3 +233,4 @@ Hooks.once("shutdown", () => {
   Handlers._installed = false;
 
 });
+
