@@ -2,6 +2,7 @@ const MODULE_ID  = "pixie-border";
 const FILTER_KEY = "_pixiOutlineFilter";
 const FILTER_ON  = "_pixiOutlineActive";
 const HOVER_KEY  = "_pixiHover";
+const GLOW_KEY   = "_pixiGlowFilter";
 
 const OUTLINE_QUALITY = 1;
 const OUTLINE_PADDING = 0;
@@ -16,7 +17,18 @@ function getThickness()    {
   if (!Number.isFinite(t)) t = 3;
   return Math.min(5, Math.max(1, Math.round(t)));
 }
-function getHideDefault()  { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); } // client-scope
+function getHideDefault()  { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
+function getEnableGlow()   { return !!game.settings.get(MODULE_ID, "enableGlow"); }
+function getGlowDistance() {
+  let d = Number(game.settings.get(MODULE_ID, "glowDistance"));
+  if (!Number.isFinite(d)) d = 10;
+  return Math.min(64, Math.max(1, Math.round(d)));
+}
+function getGlowOuterStrength() {
+  let s = Number(game.settings.get(MODULE_ID, "glowOuterStrength"));
+  if (!Number.isFinite(s)) s = 4;
+  return Math.min(10, Math.max(0, s));
+}
 
 // Color helpers
 function cssToInt(color) {
@@ -82,6 +94,47 @@ function removeOutline(token) {
   mesh.refresh?.();
 }
 
+// Glow PIXI filter operations
+function applyGlow(token, colorInt) {
+  const mesh = getRenderable(token);
+  if (!mesh) return;
+  const GlowFilter = PIXI?.filters?.GlowFilter || globalThis.GlowFilter;
+  if (!GlowFilter) { ui.notifications?.warn?.("PIXI GlowFilter not found. Ensure vendor/pixi-filters.min.js loads before scripts/main.js."); return; }
+
+  let g = token[GLOW_KEY];
+  if (!(g instanceof GlowFilter)) {
+    g = new GlowFilter({
+      distance: getGlowDistance(),
+      innerStrength: 0,
+      outerStrength: getGlowOuterStrength(),
+      color: colorInt,
+      alpha: 1,
+      quality: 0.15,
+      knockout: false
+    });
+    token[GLOW_KEY] = g;
+  }
+  g.distance      = getGlowDistance();
+  g.outerStrength = getGlowOuterStrength();
+  g.innerStrength = 0;
+  g.alpha         = 1;
+  g.quality       = 0.15;
+  g.knockout      = false;
+  g.color         = colorInt;
+
+  const filters = mesh.filters ?? [];
+  if (!filters.includes(g)) mesh.filters = filters.concat([g]);
+  mesh.refresh?.();
+}
+function removeGlow(token) {
+  const mesh = getRenderable(token);
+  const g = token[GLOW_KEY];
+  if (!mesh || !g) return;
+  try { mesh.filters = (mesh.filters ?? []).filter(x => x !== g); } catch {}
+  delete token[GLOW_KEY];
+  mesh.refresh?.();
+}
+
 // ---- Foundry border visibility controls ----
 function hideNativeBorder(token) {
   const b = token?.border;
@@ -103,6 +156,9 @@ function refreshToken(token) {
     const f = token[FILTER_KEY];
     if (f) { f.thickness = getThickness(); f.color = resolvedColorInt(token); }
   } else if (!show && token[FILTER_ON]) removeOutline(token);
+  
+ if (show && getEnableGlow()) applyGlow(token, resolvedColorInt(token));
+ else removeGlow(token);
 
   applyNativeBorderVisibility(token);
 }
@@ -154,7 +210,7 @@ Hooks.on("canvasReady", () => {
 
   Handlers.delete = Hooks.on("deleteToken", (scene, doc) => {
     const t = canvas.tokens?.get(doc.id);
-    if (t) removeOutline(t);
+    if (t) { removeGlow(t); removeOutline(t); }
   });
 
   for (const t of canvas.tokens?.placeables ?? []) {
@@ -174,9 +230,8 @@ Hooks.once("shutdown", () => {
   off("refreshToken", Handlers.refreshToken);
   off("deleteToken",  Handlers.delete);
 
-  for (const t of canvas.tokens?.placeables ?? []) removeOutline(t);
+  for (const t of canvas.tokens?.placeables ?? []) { removeGlow(t); removeOutline(t); }
   Object.keys(Handlers).forEach(k => delete Handlers[k]);
   Handlers._installed = false;
 
 });
-
