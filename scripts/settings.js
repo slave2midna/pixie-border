@@ -3,22 +3,22 @@ const MODULE_ID = "pixie-border";
 Hooks.once("init", () => {
   // Color mode
   game.settings.register(MODULE_ID, "mode", {
-    name: "Border color mode",
-    hint: "Use foundry disposition colors, a custom color, or player colors.",
+    name: game.i18n.localize("pixie-border.settings.mode.name"),
+    hint: game.i18n.localize("pixie-border.settings.mode.hint"),
     scope: "world",
     config: true,
     type: String,
     default: "disposition",
     choices: {
-      disposition: "Disposition colors",
-      custom: "Custom color"
+      disposition: game.i18n.localize("pixie-border.settings.mode.choices.disposition"),
+      custom: game.i18n.localize("pixie-border.settings.mode.choices.custom")
     }
   });
 
   // Custom color (used only when mode=custom)
   game.settings.register(MODULE_ID, "customColor", {
-    name: "Custom color (hex or CSS)",
-    hint: "Used only when Color mode = Custom. Examples: #88ccff or rgb(136,204,255).",
+    name: game.i18n.localize("pixie-border.settings.customColor.name"),
+    hint: game.i18n.localize("pixie-border.settings.customColor.hint"),
     scope: "world",
     config: true,
     type: String,
@@ -27,8 +27,8 @@ Hooks.once("init", () => {
 
   // Visual thickness (pixels)
   game.settings.register(MODULE_ID, "thickness", {
-    name: "Border thickness",
-    hint: "Outline thickness in pixels.",
+    name: game.i18n.localize("pixie-border.settings.thickness.name"),
+    hint: game.i18n.localize("pixie-border.settings.thickness.hint"),
     scope: "world",
     config: true,
     type: Number,
@@ -38,8 +38,8 @@ Hooks.once("init", () => {
 
   // Hide Foundry's default square token border
   game.settings.register(MODULE_ID, "hideDefaultBorder", {
-    name: "Hide Default Foundry Border",
-    hint: "Hide Foundry’s built-in selection border on tokens (client-side).",
+    name: game.i18n.localize("pixie-border.settings.hideDefaultBorder.name"),
+    hint: game.i18n.localize("pixie-border.settings.hideDefaultBorder.hint"),
     scope: "world",
     config: true,
     type: Boolean,
@@ -49,8 +49,8 @@ Hooks.once("init", () => {
 
   // Enable border glow
   game.settings.register(MODULE_ID, "enableGlow", {
-    name: "Enable glow",
-    hint: "If enabled, tokens will also get a soft PIXI glow that follows the outline color.",
+    name: game.i18n.localize("pixie-border.settings.enableGlow.name"),
+    hint: game.i18n.localize("pixie-border.settings.enableGlow.hint"),
     scope: "world",
     config: true,
     type: Boolean,
@@ -59,8 +59,8 @@ Hooks.once("init", () => {
 
   // Glow distance (pixels)
   game.settings.register(MODULE_ID, "glowDistance", {
-    name: "Glow distance",
-    hint: "Glow radius in pixels. Larger values expand the glow outward.",
+    name: game.i18n.localize("pixie-border.settings.glowDistance.name"),
+    hint: game.i18n.localize("pixie-border.settings.glowDistance.hint"),
     scope: "world",
     config: true,
     type: Number,
@@ -70,8 +70,8 @@ Hooks.once("init", () => {
 
   // Glow strength
   game.settings.register(MODULE_ID, "glowOuterStrength", {
-    name: "Glow outer strength",
-    hint: "Intensity of the outer glow. Higher values are brighter.",
+    name: game.i18n.localize("pixie-border.settings.glowOuterStrength.name"),
+    hint: game.i18n.localize("pixie-border.settings.glowOuterStrength.hint"),
     scope: "world",
     config: true,
     type: Number,
