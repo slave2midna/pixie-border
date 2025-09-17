@@ -3,7 +3,7 @@
     "settings": {
       "mode": {
         "name": "Border color mode",
-        "hint": "Use Foundry disposition colors or a custom color.",
+        "hint": "Set whether border should use Foundry disposition colors or a custom color.",
         "choices": {
           "disposition": "Disposition colors",
           "custom": "Custom color"
@@ -19,11 +19,11 @@
       },
       "hideDefaultBorder": {
         "name": "Hide Default Foundry Border",
-        "hint": "Hide Foundry’s built-in selection border on tokens (client-side)."
+        "hint": "Hide Foundry’s built-in selection border on tokens."
       },
       "enableGlow": {
         "name": "Enable glow",
-        "hint": "If enabled, tokens will also get a soft PIXI glow that follows the outline color."
+        "hint": "If enable a soft glow that follows the outline color."
       },
       "glowDistance": {
         "name": "Glow distance",
