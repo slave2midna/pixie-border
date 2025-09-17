@@ -6,7 +6,8 @@
         "hint": "Use Foundry disposition colors or a custom color.",
         "choices": {
           "disposition": "Disposition colors",
-          "custom": "Custom color"
+          "custom": "Custom color",
+          "condition": "Condition colors"
         }
       },
       "customColor": {
