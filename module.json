@@ -22,12 +22,12 @@
     "requires": []
   },
 
-  "esmodules": [
+  "esmodules": [],
+  "scripts": [
     "vendor/pixi-filters.min.js",
     "scripts/settings.js",
     "scripts/main.js"
   ],
-  "scripts": [],
   "styles": [],
 
   "languages": [
