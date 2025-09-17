@@ -11,8 +11,7 @@ Hooks.once("init", () => {
     default: "disposition",
     choices: {
       disposition: game.i18n.localize("pixie-border.settings.mode.choices.disposition"),
-      custom: game.i18n.localize("pixie-border.settings.mode.choices.custom"),
-      condition: game.i18n.localize("pixie-border.settings.mode.choices.condition")
+      custom: game.i18n.localize("pixie-border.settings.mode.choices.custom")
     }
   });
 
@@ -48,16 +47,6 @@ Hooks.once("init", () => {
     requiresReload: true 
   });
 
-  // Enable target border
-  game.settings.register(MODULE_ID, "enableTarget", {
-    name: game.i18n.localize("pixie-border.settings.enableTarget.name"),
-    hint: game.i18n.localize("pixie-border.settings.enableTarget.hint"),
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: false
-  });
-
   // Enable border glow
   game.settings.register(MODULE_ID, "enableGlow", {
     name: game.i18n.localize("pixie-border.settings.enableGlow.name"),
@@ -91,5 +80,3 @@ Hooks.once("init", () => {
   });
 
 });
-
-
