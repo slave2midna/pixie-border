@@ -36,7 +36,7 @@ Hooks.once("init", () => {
     range: { min: 1, max: 5, step: 1 }
   });
 
-  // Hide Foundry's default square token border
+  // Hide Foundry's default square border
   game.settings.register(MODULE_ID, "hideDefaultBorder", {
     name: game.i18n.localize("pixie-border.settings.hideDefaultBorder.name"),
     hint: game.i18n.localize("pixie-border.settings.hideDefaultBorder.hint"),
@@ -78,5 +78,4 @@ Hooks.once("init", () => {
     default: 4,
     range: { min: 0, max: 10, step: 0.5 }
   });
-
 });
