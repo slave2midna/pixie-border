@@ -9,7 +9,7 @@ const OUTLINE_PADDING = 0;
 
 function getRenderable(token) { return token?.mesh ?? token?.icon ?? null; }
 
-// Setting getters
+// Setting helpers
 function getMode()         { return game.settings.get(MODULE_ID, "mode"); }
 function getCustomColor()  { return game.settings.get(MODULE_ID, "customColor"); }
 function getThickness()    {
@@ -66,7 +66,10 @@ function applyOutline(token, colorInt) {
   const mesh = getRenderable(token);
   if (!mesh) return;
   const OutlineFilter = PIXI?.filters?.OutlineFilter || globalThis.OutlineFilter;
-  if (!OutlineFilter) { ui.notifications?.warn?.("PIXI OutlineFilter not found. Ensure vendor/pixi-filters.min.js loads before scripts/main.js."); return; }
+  if (!OutlineFilter) {
+    console.warn("[pixie-border] OutlineFilter not found. Ensure scripts/pixi-filters.js loads before scripts/main.js.");
+    return;
+  }
 
   let f = token[FILTER_KEY];
   if (!(f instanceof OutlineFilter)) {
@@ -99,7 +102,10 @@ function applyGlow(token, colorInt) {
   const mesh = getRenderable(token);
   if (!mesh) return;
   const GlowFilter = PIXI?.filters?.GlowFilter || globalThis.GlowFilter;
-  if (!GlowFilter) { ui.notifications?.warn?.("PIXI GlowFilter not found. Ensure vendor/pixi-filters.min.js loads before scripts/main.js."); return; }
+  if (!GlowFilter) {
+    console.warn("[pixie-border] GlowFilter not found. Ensure scripts/pixi-filters.js loads before scripts/main.js.");
+    return;
+  }
 
   let g = token[GLOW_KEY];
   if (!(g instanceof GlowFilter)) {
@@ -135,7 +141,7 @@ function removeGlow(token) {
   mesh.refresh?.();
 }
 
-// ---- Foundry border visibility controls ----
+// Foundry border visibility controls
 function hideNativeBorder(token) {
   const b = token?.border;
   if (!b) return;
@@ -179,7 +185,6 @@ Hooks.on("canvasReady", () => {
     refreshToken(token);
   });
 
-  // Recolor on disposition change
   Handlers.updateDoc = Hooks.on("updateToken", (doc, changes) => {
     if (!("disposition" in changes)) return;
     const t = canvas.tokens?.get(doc.id);
@@ -233,3 +238,4 @@ Hooks.once("shutdown", () => {
   Handlers._installed = false;
 
 });
+
