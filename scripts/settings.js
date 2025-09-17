@@ -11,7 +11,8 @@ Hooks.once("init", () => {
     default: "disposition",
     choices: {
       disposition: game.i18n.localize("pixie-border.settings.mode.choices.disposition"),
-      custom: game.i18n.localize("pixie-border.settings.mode.choices.custom")
+      custom: game.i18n.localize("pixie-border.settings.mode.choices.custom"),
+      condition: game.i18n.localize("pixie-border.settings.mode.choices.condition")
     }
   });
 
@@ -80,3 +81,4 @@ Hooks.once("init", () => {
   });
 
 });
+
