@@ -2,6 +2,7 @@ const MODULE_ID  = "pixie-border";
 const FILTER_KEY = "_pixiOutlineFilter";
 const FILTER_ON  = "_pixiOutlineActive";
 const HOVER_KEY  = "_pixiHover";
+const TARGET_KEY = "_pixiTarget";
 const GLOW_KEY   = "_pixiGlowFilter";
 
 const OUTLINE_QUALITY = 1;
@@ -16,6 +17,7 @@ const logOnce = (k, level, ...msg) => { if (once.has(k)) return; once.add(k); (c
 function getRenderable(token) { return token?.mesh ?? token?.icon ?? null; }
 function getMode()        { return game.settings.get(MODULE_ID, "mode"); }
 function getCustomColor() { return game.settings.get(MODULE_ID, "customColor"); }
+function getEnableTarget(){ return !!game.settings.get(MODULE_ID, "enableTarget"); }
 function getThickness()   {
   let t = Number(game.settings.get(MODULE_ID, "thickness"));
   if (!Number.isFinite(t)) t = 3;
@@ -90,7 +92,7 @@ function conditionColorInt(token) {
 function resolvedColorInt(token) {
   const mode = getMode();
   if (mode === "custom")     return cssToInt(getCustomColor());
-  if (mode === "condition")  return conditionColorInt(token); // NEW
+  if (mode === "condition")  return conditionColorInt(token);
   return dispositionColorInt(token);
 }
 
@@ -221,7 +223,13 @@ function applyNativeBorderVisibility(token) {
 // Token refresh
 function refreshToken(token) {
   if (!token) return;
-  const show = token.controlled || !!token[HOVER_KEY];
+
+  // Visible if controlled, hovered, or (optionally) targeted BY ME
+  const show =
+    token.controlled ||
+    !!token[HOVER_KEY] ||
+    (getEnableTarget() && !!token[TARGET_KEY]);
+
   const color = resolvedColorInt(token);
 
   if (show) {
@@ -261,6 +269,13 @@ Hooks.on("canvasReady", () => {
     refreshToken(token);
   });
 
+  // Per-user targeting: reflect ONLY my own targets
+  Handlers.target = Hooks.on("targetToken", (user, token /*, targeted */) => {
+    // Always recompute from my local selection so any change (mine or others) keeps me accurate.
+    token[TARGET_KEY] = !!game.user?.targets?.has?.(token);
+    refreshToken(token);
+  });
+
   // Recolor on disposition change, or on any token change if mode=condition (HP bar may be token-side)
   Handlers.updateDoc = Hooks.on("updateToken", (doc, changes) => {
     if (getMode() !== "condition" && !("disposition" in changes)) return;
@@ -269,7 +284,7 @@ Hooks.on("canvasReady", () => {
   });
 
   // Live-refresh on actor HP edits (covers linked and unlinked actors)
-  Handlers.updateActor = Hooks.on("updateActor", (actor, changes) => { // NEW
+  Handlers.updateActor = Hooks.on("updateActor", (actor, changes) => {
     if (getMode() !== "condition") return;
     for (const t of canvas.tokens?.placeables ?? []) {
       if (t.document?.actorId === actor.id) refreshToken(t);
@@ -285,7 +300,14 @@ Hooks.on("canvasReady", () => {
         else if (t.border) { t.border.renderable = true; t.border.alpha = 1; t.border.visible = true; t.refresh?.(); }
       }
     } else {
-      for (const t of canvas.tokens?.placeables ?? []) refreshToken(t);
+      // enableTarget / mode / colors / glow etc.
+      for (const t of canvas.tokens?.placeables ?? []) {
+        if (setting.key === `${MODULE_ID}.enableTarget`) {
+          // Per-user: recompute from my targets when toggled
+          t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
+        }
+        refreshToken(t);
+      }
     }
   });
 
@@ -298,8 +320,11 @@ Hooks.on("canvasReady", () => {
     if (t) { removeGlow(t); removeOutline(t); }
   });
 
+  // Initial state across tokens (hover + MY targets)
+  const myTargets = game.user?.targets ?? new Set();
   for (const t of canvas.tokens?.placeables ?? []) {
-    t[HOVER_KEY] = !!t?.hover;
+    t[HOVER_KEY]  = !!t?.hover;
+    t[TARGET_KEY] = myTargets.has(t);
     refreshToken(t);
   }
 });
@@ -308,8 +333,9 @@ Hooks.once("shutdown", () => {
   const off = (h, fn) => { if (fn) try { Hooks.off(h, fn); } catch {} };
   off("hoverToken",   Handlers.hover);
   off("controlToken", Handlers.control);
+  off("targetToken",  Handlers.target);
   off("updateToken",  Handlers.updateDoc);
-  off("updateActor",  Handlers.updateActor); // NEW
+  off("updateActor",  Handlers.updateActor);
   off("updateSetting",Handlers.updateSetting);
   off("refreshToken", Handlers.refreshToken);
   off("deleteToken",  Handlers.delete);
