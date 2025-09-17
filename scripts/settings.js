@@ -11,8 +11,7 @@ Hooks.once("init", () => {
     default: "disposition",
     choices: {
       disposition: game.i18n.localize("pixie-border.settings.mode.choices.disposition"),
-      custom: game.i18n.localize("pixie-border.settings.mode.choices.custom"),
-      condition: game.i18n.localize("pixie-border.settings.mode.choices.condition")
+      custom: game.i18n.localize("pixie-border.settings.mode.choices.custom")
     }
   });
 
@@ -37,7 +36,7 @@ Hooks.once("init", () => {
     range: { min: 1, max: 5, step: 1 }
   });
 
-  // Hide Foundry's default square token border
+  // Hide Foundry's default square border
   game.settings.register(MODULE_ID, "hideDefaultBorder", {
     name: game.i18n.localize("pixie-border.settings.hideDefaultBorder.name"),
     hint: game.i18n.localize("pixie-border.settings.hideDefaultBorder.hint"),
@@ -46,16 +45,6 @@ Hooks.once("init", () => {
     type: Boolean,
     default: false,
     requiresReload: true 
-  });
-
-  // Enable target border
-  game.settings.register(MODULE_ID, "enableTarget", {
-    name: game.i18n.localize("pixie-border.settings.enableTarget.name"),
-    hint: game.i18n.localize("pixie-border.settings.enableTarget.hint"),
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: false
   });
 
   // Enable border glow
@@ -89,7 +78,4 @@ Hooks.once("init", () => {
     default: 4,
     range: { min: 0, max: 10, step: 0.5 }
   });
-
 });
-
-

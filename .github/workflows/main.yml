@@ -121,7 +121,6 @@ jobs:
             LICENSE                              \
             templates                            \
             scripts/                             \
-            vendor/                              \
             styles/                              \
             packs/                               \
             language/                            \
