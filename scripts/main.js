@@ -12,7 +12,7 @@ const LOG = "[pixie-border]";
 const once = new Set();
 const logOnce = (k, level, ...msg) => { if (once.has(k)) return; once.add(k); (console[level]||console.log)(LOG, ...msg); };
 
-// General Helpers
+// Setting Helpers
 function getRenderable(token) { return token?.mesh ?? token?.icon ?? null; }
 function getMode()        { return game.settings.get(MODULE_ID, "mode"); }
 function getCustomColor() { return game.settings.get(MODULE_ID, "customColor"); }
@@ -173,7 +173,7 @@ function removeGlow(token) {
   mesh.refresh?.();
 }
 
-// Native border controls
+// Native border control
 function hideNativeBorder(token) {
   const b = token?.border;
   if (!b) return;
@@ -278,3 +278,4 @@ Hooks.once("shutdown", () => {
 
   logOnce("shutdown", "info", `${LOG} shutdown — handlers removed`);
 });
+
