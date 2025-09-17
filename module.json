@@ -23,8 +23,7 @@
   },
 
   "scripts": [
-    "vendor/pixi-compat-shim.js",
-    "vendor/pixi-filters.min.js"
+    "scripts/pixi-filters.js"
   ],
   "esmodules": [
     "scripts/settings.js",
