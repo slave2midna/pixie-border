@@ -51,6 +51,7 @@ function cssToInt(color) {
   return 0xffffff;
 }
 
+// Disposition color helpers
 const DISP_MAP = { [-1]:0xe74c3c, [0]:0xf1c40f, [1]:0x2ecc71, [2]:0x3498db, [3]:0x9b59b6 };
 function dispositionColorInt(token) {
   const disp = token?.document?.disposition ?? 0;
@@ -58,8 +59,39 @@ function dispositionColorInt(token) {
   const raw = cfg?.[disp] ?? cfg?.[String(disp)];
   return raw != null ? cssToInt(raw) : (DISP_MAP[disp] ?? 0xffffff);
 }
+
+// Condition color helpers
+const HEALTH_GREEN  = 0x2ecc71; // ≥ 50%
+const HEALTH_YELLOW = 0xf1c40f; // ≥ 25%
+const HEALTH_RED    = 0xe74c3c; // < 25%
+
+function getHpPercent(token) {
+  const doc = token?.document;
+  if (!doc || typeof doc.getBarAttribute !== "function") return null;
+  const bar = doc.getBarAttribute("bar1");
+  if (!bar || bar.type !== "bar") return null;
+
+  const v = Number(bar.value);
+  const m = Number(bar.max);
+  if (!Number.isFinite(v) || !Number.isFinite(m) || m <= 0) return null;
+
+  return Math.max(0, Math.min(1, v / m));
+}
+
+function conditionColorInt(token) {
+  const pct = getHpPercent(token);
+  if (pct == null) return dispositionColorInt(token);
+  if (pct >= 0.50) return HEALTH_GREEN;
+  if (pct >= 0.25) return HEALTH_YELLOW;
+  return HEALTH_RED;
+}
+
+// Color mode resolver
 function resolvedColorInt(token) {
-  return (getMode() === "custom") ? cssToInt(getCustomColor()) : dispositionColorInt(token);
+  const mode = getMode();
+  if (mode === "custom")     return cssToInt(getCustomColor());
+  if (mode === "condition")  return conditionColorInt(token); // NEW
+  return dispositionColorInt(token);
 }
 
 // Filter helpers
@@ -229,10 +261,19 @@ Hooks.on("canvasReady", () => {
     refreshToken(token);
   });
 
+  // Recolor on disposition change, or on any token change if mode=condition (HP bar may be token-side)
   Handlers.updateDoc = Hooks.on("updateToken", (doc, changes) => {
-    if (!("disposition" in changes)) return;
+    if (getMode() !== "condition" && !("disposition" in changes)) return;
     const t = canvas.tokens?.get(doc.id);
     if (t) refreshToken(t);
+  });
+
+  // Live-refresh on actor HP edits (covers linked and unlinked actors)
+  Handlers.updateActor = Hooks.on("updateActor", (actor, changes) => { // NEW
+    if (getMode() !== "condition") return;
+    for (const t of canvas.tokens?.placeables ?? []) {
+      if (t.document?.actorId === actor.id) refreshToken(t);
+    }
   });
 
   Handlers.updateSetting = Hooks.on("updateSetting", (setting) => {
@@ -268,6 +309,7 @@ Hooks.once("shutdown", () => {
   off("hoverToken",   Handlers.hover);
   off("controlToken", Handlers.control);
   off("updateToken",  Handlers.updateDoc);
+  off("updateActor",  Handlers.updateActor); // NEW
   off("updateSetting",Handlers.updateSetting);
   off("refreshToken", Handlers.refreshToken);
   off("deleteToken",  Handlers.delete);
@@ -278,4 +320,3 @@ Hooks.once("shutdown", () => {
 
   logOnce("shutdown", "info", `${LOG} shutdown — handlers removed`);
 });
-
