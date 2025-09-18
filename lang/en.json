@@ -38,6 +38,13 @@
         "name": "Glow outer strength",
         "hint": "Intensity of the outer glow. Higher values are brighter."
       }
+    },
+    "mode": {
+      "help": {
+        "disposition": "Color border based on token’s Foundry disposition.",
+        "custom": "Color border based on a predefined hex color.",
+        "condition": "Color border based on the bar1 attribute (usually Health)."
+      }
     }
   }
 }
