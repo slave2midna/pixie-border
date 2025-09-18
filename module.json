@@ -23,8 +23,7 @@
   },
 
   "scripts": [
-    "scripts/pixi-filters.js",
-    "scripts/lib/jscolor.js"
+    "scripts/pixi-filters.js"
   ],
   "esmodules": [
     "scripts/settings.js",
