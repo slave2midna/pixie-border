@@ -23,7 +23,7 @@ Hooks.once("init", () => {
     requiresReload: true
   });
 
-  // Enable Target Border
+  // Enable Target Border (per-user)
   game.settings.register(MODULE_ID, "enableTarget", {
     name: game.i18n.localize("pixie-border.settings.enableTarget.name"),
     hint: game.i18n.localize("pixie-border.settings.enableTarget.hint"),
@@ -65,7 +65,7 @@ Hooks.once("init", () => {
     range: { min: 0, max: 10, step: 0.5 }
   });
 
-  // Color Mode
+  // Color Mode (with inline help)
   const modeDisp = game.i18n.localize("pixie-border.settings.mode.choices.disposition");
   const modeCust = game.i18n.localize("pixie-border.settings.mode.choices.custom");
   const modeCond = game.i18n.localize("pixie-border.settings.mode.choices.condition");
@@ -86,19 +86,16 @@ Hooks.once("init", () => {
     config: true,
     type: String,
     default: "disposition",
-    choices: {
-      disposition: modeDisp,
-      custom: modeCust,
-      condition: modeCond
-    }
+    choices: { disposition: modeDisp, custom: modeCust, condition: modeCond }
   });
 
-  // Custom color
+  // Custom color (String + hex; UI shows color input in v13)
   game.settings.register(MODULE_ID, "customColor", {
     name: game.i18n.localize("pixie-border.settings.customColor.name"),
     hint: game.i18n.localize("pixie-border.settings.customColor.hint"),
     scope: "world",
     config: true,
-    type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
+    type: String,
+    default: "#88ccff"
   });
 });
