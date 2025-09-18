@@ -3,10 +3,11 @@
     "settings": {
       "mode": {
         "name": "Border color mode",
-        "hint": "Set whether border should use Foundry disposition colors or a custom color.",
+        "hint": "Use Foundry disposition colors, a custom color, or colors based on health condition.",
         "choices": {
           "disposition": "Disposition colors",
-          "custom": "Custom color"
+          "custom": "Custom color",
+          "condition": "Condition colors"
         }
       },
       "customColor": {
@@ -21,9 +22,13 @@
         "name": "Hide Default Foundry Border",
         "hint": "Hide Foundry’s built-in selection border on tokens."
       },
+      "enableTarget": {
+        "name": "Enable target border",
+        "hint": "Also show the outline and glow on tokens you target."
+      },
       "enableGlow": {
         "name": "Enable glow",
-        "hint": "If enable a soft glow that follows the outline color."
+        "hint": "If enabled, tokens will also get a soft glow that follows the outline color."
       },
       "glowDistance": {
         "name": "Glow distance",
