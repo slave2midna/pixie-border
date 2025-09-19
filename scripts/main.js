@@ -17,14 +17,15 @@ const _onceSet = new Set();
 const logOnce = (k, level, ...msg) => { if (_onceSet.has(k)) return; _onceSet.add(k); (console[level]||console.log)(LOG, ...msg); };
 
 // Settings helpers
-function getRenderable(token) { return token?.mesh ?? token?.icon ?? null; }
-function getMode()           { return game.settings.get(MODULE_ID, "mode"); }
-function getCustomColor()    { return game.settings.get(MODULE_ID, "customColor"); }
-function getTargetColor()    { return game.settings.get(MODULE_ID, "targetColor"); }
-function getGlowColorSetting(){ return game.settings.get(MODULE_ID, "glowColor"); }
-function getEnableTarget()   { return !!game.settings.get(MODULE_ID, "enableTarget"); }
-function getHideDefault()    { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
-function getEnableGlow()     { return !!game.settings.get(MODULE_ID, "enableGlow"); }
+function getRenderable(token)  { return token?.mesh ?? token?.icon ?? null; }
+function getMode()             { return game.settings.get(MODULE_ID, "mode"); }
+function getCustomColor()      { return game.settings.get(MODULE_ID, "customColor"); }
+function getTargetColor()      { return game.settings.get(MODULE_ID, "targetColor"); }
+function getGlowColorSetting() { return game.settings.get(MODULE_ID, "glowColor"); }
+function getTargetGlowColor()  { return game.settings.get(MODULE_ID, "targetGlowColor"); }
+function getEnableTarget()     { return !!game.settings.get(MODULE_ID, "enableTarget"); }
+function getHideDefault()      { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
+function getEnableGlow()       { return !!game.settings.get(MODULE_ID, "enableGlow"); }
 
 function getThickness() {
   let t = Number(game.settings.get(MODULE_ID, "thickness"));
@@ -106,9 +107,13 @@ function resolvedOutlineColorInt(token) {
 // Glow color resolver
 function resolvedGlowColorInt(token) {
   if (!getEnableGlow()) return null;
+
   const mode = getMode();
   if (mode === "custom") {
-    const hex = getGlowColorSetting() ?? getCustomColor();
+    const isMyTarget = getEnableTarget() && !!token[TARGET_KEY];
+    const hex = isMyTarget
+      ? (getTargetGlowColor() ?? getGlowColorSetting() ?? getCustomColor())
+      : (getGlowColorSetting() ?? getCustomColor());
     return cssToInt(String(hex ?? "#88ccff"));
   }
   return resolvedOutlineColorInt(token);
