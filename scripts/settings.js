@@ -15,6 +15,17 @@ Hooks.once("init", () => {
     requiresReload: true
   });
 
+  // Hide Foundry's target indicator
+  game.settings.register(MODULE_ID, "hideTargetIndicator", {
+     name: game.i18n.localize("pixie-border.settings.hideTargetIndicator.name"),
+     hint: game.i18n.localize("pixie-border.settings.hideTargetIndicator.hint"),
+     scope: "client",
+     config: true,
+     type: Boolean,
+     default: false,
+     requiresReload: true
+   });
+
   // Enable Target Border
   game.settings.register(MODULE_ID, "enableTarget", {
     name: game.i18n.localize("pixie-border.settings.enableTarget.name"),
@@ -133,3 +144,4 @@ Hooks.once("init", () => {
     type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
 });
+
