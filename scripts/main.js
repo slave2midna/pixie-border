@@ -6,7 +6,7 @@ const HOVER_KEY   = "_pixiHover";
 const TARGET_KEY  = "_pixiTarget";
 const GLOW_KEY    = "_pixiGlowFilter";
 
-// PIXI filter defaults
+// Hardcoded PIXI settings
 const OUTLINE_QUALITY = 1;
 const OUTLINE_PADDING = 0;
 
@@ -16,7 +16,7 @@ const _onceSet = new Set();
 const logOnce = (k, level, ...msg) => { if (_onceSet.has(k)) return; _onceSet.add(k); (console[level]||console.log)(LOG, ...msg); };
 
 /* =================================================================================
- * Settings helpers (no backwards compatibility)
+ * Settings helpers
  * ================================================================================= */
 
 function getRenderable(token)  { return token?.mesh ?? token?.icon ?? null; }
@@ -33,6 +33,7 @@ function getDisableOutline()   { return !!game.settings.get(MODULE_ID, "disableO
 function getDisableGlow()      { return !!game.settings.get(MODULE_ID, "disableGlow"); }
 function getEnableTarget()     { return !!game.settings.get(MODULE_ID, "enableTarget"); }
 function getHideDefault()      { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
+function getHideIndicator()    { return !!game.settings.get(MODULE_ID, "hideTargetIndicator"); }
 
 // Numbers
 function getThickness() {
@@ -123,7 +124,7 @@ function resolvedGlowColorInt(token) {
   return resolvedOutlineColorInt(token);
 }
 
-// Legacy shim; retained only if referenced elsewhere
+// Legacy shim; retained only if needed later
 // function resolvedColorInt(token) { return resolvedOutlineColorInt(token); }
 
 /* =================================================================================
@@ -256,6 +257,18 @@ function applyNativeBorderVisibility(token) {
   if (getHideDefault()) hideNativeBorder(token);
 }
 
+function hideNativeIndicator(token) {
+  const i = token?.target;
+  if (!i) return;
+  i.renderable = false;
+  i.visible = false;
+  i.alpha = 0;
+  if (typeof i.clear === "function") i.clear();
+}
+function applyNativeTargetVisibility(token) {
+  if (getHideIndicator()) hideNativeIndicator(token);
+}
+
 /* =================================================================================
  * Token refresh
  * ================================================================================= */
@@ -263,14 +276,13 @@ function applyNativeBorderVisibility(token) {
 function refreshToken(token) {
   if (!token) return;
 
-  // Show state: controlled, hovered, or (optionally) targeted by me
   const show =
     token.controlled ||
     !!token[HOVER_KEY] ||
     (getEnableTarget() && !!token[TARGET_KEY]);
 
   const outlineColor = resolvedOutlineColorInt(token);
-  const glowColor    = resolvedGlowColorInt(token); // may be null
+  const glowColor    = resolvedGlowColorInt(token);
 
   const outlineWanted = !getDisableOutline();
   const glowWanted    = !getDisableGlow();
@@ -292,7 +304,7 @@ function refreshToken(token) {
 }
 
 /* =================================================================================
- * Hooks wiring
+ * Hooks, Handlers & Wiring
  * ================================================================================= */
 
 const Handlers = {};
@@ -384,3 +396,4 @@ Hooks.once("shutdown", () => {
 
   logOnce("shutdown", "info", `${LOG} shutdown — handlers removed`);
 });
+
