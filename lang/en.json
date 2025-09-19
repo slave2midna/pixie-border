@@ -11,8 +11,8 @@
         }
       },
       "customColor": {
-        "name": "Custom color (hex or CSS)",
-        "hint": "Used only when Color mode = Custom. Examples: #88ccff or rgb(136,204,255)."
+        "name": "Custom color",
+        "hint": "Used only when Color mode = Custom. Default: #88ccff or rgb(136,204,255)."
       },
       "thickness": {
         "name": "Border thickness",
