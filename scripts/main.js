@@ -23,6 +23,7 @@ function getCustomColor()      { return game.settings.get(MODULE_ID, "customColo
 function getTargetColor()      { return game.settings.get(MODULE_ID, "targetColor"); }
 function getGlowColorSetting() { return game.settings.get(MODULE_ID, "glowColor"); }
 function getTargetGlowColor()  { return game.settings.get(MODULE_ID, "targetGlowColor"); }
+function getEnableOutline()    { return !!game.settings.get(MODULE_ID, "enableOutline"); } // NEW
 function getEnableTarget()     { return !!game.settings.get(MODULE_ID, "enableTarget"); }
 function getHideDefault()      { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
 function getEnableGlow()       { return !!game.settings.get(MODULE_ID, "enableGlow"); }
@@ -71,7 +72,6 @@ function dispositionColorInt(token) {
 const HEALTH_GREEN  = 0x2ecc71; // ≥ 50%
 const HEALTH_YELLOW = 0xf1c40f; // ≥ 25%
 const HEALTH_RED    = 0xe74c3c; // < 25%
-
 function getHpPercent(token) {
   const doc = token?.document;
   if (!doc || typeof doc.getBarAttribute !== "function") return null;
@@ -120,9 +120,7 @@ function resolvedGlowColorInt(token) {
 }
 
 // Legacy shim; can be removed if unused elsewhere.
-function resolvedColorInt(token) {
-  return resolvedOutlineColorInt(token);
-}
+function resolvedColorInt(token) { return resolvedOutlineColorInt(token); }
 
 // PIXI filter helpers
 function getOutlineCtor() { return PIXI?.filters?.OutlineFilter || globalThis.OutlineFilter; }
@@ -255,26 +253,36 @@ function applyNativeBorderVisibility(token) {
 function refreshToken(token) {
   if (!token) return;
 
+  // Show state: controlled, hovered, or (optionally) targeted by me
   const show =
     token.controlled ||
     !!token[HOVER_KEY] ||
     (getEnableTarget() && !!token[TARGET_KEY]);
 
   const outlineColor = resolvedOutlineColorInt(token);
-  const glowColor    = resolvedGlowColorInt(token);
+  const glowColor    = resolvedGlowColorInt(token); // may be null
 
   if (show) {
-    if (!token[FILTER_ON]) applyOutline(token, outlineColor);
-    else if (token[FILTER_ON]) {
-      const f = token[FILTER_KEY];
-      if (f) { f.thickness = getThickness(); f.color = outlineColor; }
+    // Outline ON/OFF
+    if (getEnableOutline()) {
+      if (!token[FILTER_ON]) applyOutline(token, outlineColor);
+      else {
+        const f = token[FILTER_KEY];
+        if (f) { f.thickness = getThickness(); f.color = outlineColor; }
+      }
+    } else {
+      if (token[FILTER_ON]) removeOutline(token);
     }
-    if (getEnableGlow()) applyGlow(token, (glowColor ?? outlineColor));
-    else removeGlow(token);
-  } else if (token[FILTER_ON]) {
-    removeOutline(token);
-    removeGlow(token);
+
+    // Glow ON/OFF
+    if (getEnableGlow()) {
+      applyGlow(token, glowColor ?? outlineColor);
+    } else {
+      removeGlow(token);
+    }
   } else {
+    // Neither when not shown
+    removeOutline(token);
     removeGlow(token);
   }
 
@@ -330,8 +338,10 @@ Hooks.on("canvasReady", () => {
     } else {
       for (const t of canvas.tokens?.placeables ?? []) {
         if (setting.key === `${MODULE_ID}.enableTarget`) {
+          // Per-user: recompute from my targets when toggled
           t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
         }
+        // Any setting change (mode, colors, enableOutline/glow, etc.) → refresh
         refreshToken(t);
       }
     }
