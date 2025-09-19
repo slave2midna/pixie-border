@@ -16,25 +16,25 @@ Hooks.once("init", () => {
     }
   });
 
-  // Custom Outline Color
-  game.settings.register(MODULE_ID, "customColor", {
-    name: game.i18n.localize("pixie-border.settings.customColor.name"),
-    hint: game.i18n.localize("pixie-border.settings.customColor.hint"),
+  // Outline color (custom mode)
+  game.settings.register(MODULE_ID, "outlineColor", {
+    name: game.i18n.localize("pixie-border.settings.outlineColor.name"),
+    hint: game.i18n.localize("pixie-border.settings.outlineColor.hint"),
     scope: "world",
     config: true,
     type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
 
-  // Custom Target Outline Color
-  game.settings.register(MODULE_ID, "targetColor", {
-    name: game.i18n.localize("pixie-border.settings.targetColor.name"),
-    hint: game.i18n.localize("pixie-border.settings.targetColor.hint"),
+  // Target outline color (custom mode + target)
+  game.settings.register(MODULE_ID, "targetOutlineColor", {
+    name: game.i18n.localize("pixie-border.settings.targetOutlineColor.name"),
+    hint: game.i18n.localize("pixie-border.settings.targetOutlineColor.hint"),
     scope: "world",
     config: true,
     type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
 
-  // Custom Glow Color
+  // Glow color (custom mode)
   game.settings.register(MODULE_ID, "glowColor", {
     name: game.i18n.localize("pixie-border.settings.glowColor.name"),
     hint: game.i18n.localize("pixie-border.settings.glowColor.hint"),
@@ -43,7 +43,7 @@ Hooks.once("init", () => {
     type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
 
-  // Custom Target Glow Color
+  // Target glow color (custom mode + target)
   game.settings.register(MODULE_ID, "targetGlowColor", {
     name: game.i18n.localize("pixie-border.settings.targetGlowColor.name"),
     hint: game.i18n.localize("pixie-border.settings.targetGlowColor.hint"),
@@ -52,7 +52,7 @@ Hooks.once("init", () => {
     type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
 
-  // Visual thickness (pixels)
+  // Border thickness (pixels)
   game.settings.register(MODULE_ID, "thickness", {
     name: game.i18n.localize("pixie-border.settings.thickness.name"),
     hint: game.i18n.localize("pixie-border.settings.thickness.hint"),
@@ -63,7 +63,7 @@ Hooks.once("init", () => {
     range: { min: 1, max: 5, step: 1 }
   });
 
-  // Hide Foundry's default square token border
+  // Hide Foundry's default selection border
   game.settings.register(MODULE_ID, "hideDefaultBorder", {
     name: game.i18n.localize("pixie-border.settings.hideDefaultBorder.name"),
     hint: game.i18n.localize("pixie-border.settings.hideDefaultBorder.hint"),
@@ -74,14 +74,14 @@ Hooks.once("init", () => {
     requiresReload: true
   });
 
-  // Enable outline (new)
-  game.settings.register(MODULE_ID, "enableOutline", {
-    name: game.i18n.localize("pixie-border.settings.enableOutline.name"),
-    hint: game.i18n.localize("pixie-border.settings.enableOutline.hint"),
+  // Disable outline (replaces enableOutline)
+  game.settings.register(MODULE_ID, "disableOutline", {
+    name: game.i18n.localize("pixie-border.settings.disableOutline.name"),
+    hint: game.i18n.localize("pixie-border.settings.disableOutline.hint"),
     scope: "world",
     config: true,
     type: Boolean,
-    default: true
+    default: false
   });
 
   // Enable target border
@@ -94,10 +94,10 @@ Hooks.once("init", () => {
     default: false
   });
 
-  // Enable border glow
-  game.settings.register(MODULE_ID, "enableGlow", {
-    name: game.i18n.localize("pixie-border.settings.enableGlow.name"),
-    hint: game.i18n.localize("pixie-border.settings.enableGlow.hint"),
+  // Disable glow (replaces enableGlow)
+  game.settings.register(MODULE_ID, "disableGlow", {
+    name: game.i18n.localize("pixie-border.settings.disableGlow.name"),
+    hint: game.i18n.localize("pixie-border.settings.disableGlow.hint"),
     scope: "world",
     config: true,
     type: Boolean,
@@ -115,7 +115,7 @@ Hooks.once("init", () => {
     range: { min: 1, max: 64, step: 1 }
   });
 
-  // Glow strength
+  // Glow outer strength
   game.settings.register(MODULE_ID, "glowOuterStrength", {
     name: game.i18n.localize("pixie-border.settings.glowOuterStrength.name"),
     hint: game.i18n.localize("pixie-border.settings.glowOuterStrength.hint"),
