@@ -1,49 +1,38 @@
 const MODULE_ID  = "pixie-border";
 
-// Token flags (store filter instances directly on the token)
+/** Token flags: store filter instances directly on the token */
 const OUTLINE_KEY = "_pixiOutlineFilter";
 const HOVER_KEY   = "_pixiHover";
 const TARGET_KEY  = "_pixiTarget";
 const GLOW_KEY    = "_pixiGlowFilter";
 
-// PIXI filter defaults
+/** PIXI filter defaults */
 const OUTLINE_QUALITY = 1;
 const OUTLINE_PADDING = 0;
 
-// Console helpers
+/** Console helpers */
 const LOG = "[pixie-border]";
 const _onceSet = new Set();
 const logOnce = (k, level, ...msg) => { if (_onceSet.has(k)) return; _onceSet.add(k); (console[level]||console.log)(LOG, ...msg); };
 
-// ---------------------------------------------------------------------------------
-// Settings helpers (with back-compat to legacy keys)
-// ---------------------------------------------------------------------------------
+/* =================================================================================
+ * Settings helpers (no backwards compatibility)
+ * ================================================================================= */
 
 function getRenderable(token)  { return token?.mesh ?? token?.icon ?? null; }
 function getMode()             { return game.settings.get(MODULE_ID, "mode"); }
 
-// Colors — prefer new keys; fall back to legacy keys for compatibility
-function getOutlineColor() {
-  // NEW: outlineColor; LEGACY: customColor
-  return game.settings.get(MODULE_ID, "outlineColor") ?? game.settings.get(MODULE_ID, "customColor");
-}
-function getTargetOutlineColor() {
-  // NEW: targetOutlineColor; LEGACY: targetColor
-  return game.settings.get(MODULE_ID, "targetOutlineColor") ?? game.settings.get(MODULE_ID, "targetColor");
-}
-function getGlowColor() {
-  // Already named glowColor; function name kept consistent
-  return game.settings.get(MODULE_ID, "glowColor");
-}
-function getTargetGlowColor() {
-  return game.settings.get(MODULE_ID, "targetGlowColor");
-}
+// Colors
+function getOutlineColor()        { return game.settings.get(MODULE_ID, "outlineColor"); }
+function getTargetOutlineColor()  { return game.settings.get(MODULE_ID, "targetOutlineColor"); }
+function getGlowColor()           { return game.settings.get(MODULE_ID, "glowColor"); }
+function getTargetGlowColor()     { return game.settings.get(MODULE_ID, "targetGlowColor"); }
 
 // Toggles
-function getEnableOutline()    { return !!game.settings.get(MODULE_ID, "enableOutline"); }
+function getDisableOutline()   { return !!game.settings.get(MODULE_ID, "disableOutline"); }
+function getDisableGlow()      { return !!game.settings.get(MODULE_ID, "disableGlow"); }
 function getEnableTarget()     { return !!game.settings.get(MODULE_ID, "enableTarget"); }
 function getHideDefault()      { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
-function getEnableGlow()       { return !!game.settings.get(MODULE_ID, "enableGlow"); }
 
 // Numbers
 function getThickness() {
@@ -62,7 +51,7 @@ function getGlowOuterStrength() {
   return Math.min(10, Math.max(0, s));
 }
 
-// Expect a "#rrggbb" string; fallback to white on bad input
+/** Expect a "#rrggbb" string; fallback to white on bad input */
 function cssToInt(color) {
   if (typeof color === "string") {
     if (foundry?.utils?.colorStringToHex) {
@@ -78,11 +67,10 @@ function cssToInt(color) {
   return 0xffffff;
 }
 
-// ---------------------------------------------------------------------------------
-// Color resolvers
-// ---------------------------------------------------------------------------------
+/* =================================================================================
+ * Color resolvers
+ * ================================================================================= */
 
-// Disposition colors (fallback map in case config is missing)
 const DISP_MAP = { [-1]:0xe74c3c, [0]:0xf1c40f, [1]:0x2ecc71, [2]:0x3498db, [3]:0x9b59b6 };
 function dispositionColorInt(token) {
   const disp = token?.document?.disposition ?? 0;
@@ -91,7 +79,6 @@ function dispositionColorInt(token) {
   return raw != null ? cssToInt(raw) : (DISP_MAP[disp] ?? 0xffffff);
 }
 
-// Condition color resolver
 const HEALTH_GREEN  = 0x2ecc71; // ≥ 50%
 const HEALTH_YELLOW = 0xf1c40f; // ≥ 25%
 const HEALTH_RED    = 0xe74c3c; // < 25%
@@ -100,11 +87,8 @@ function getHpPercent(token) {
   if (!doc || typeof doc.getBarAttribute !== "function") return null;
   const bar = doc.getBarAttribute("bar1");
   if (!bar || bar.type !== "bar") return null;
-
-  const v = Number(bar.value);
-  const m = Number(bar.max);
+  const v = Number(bar.value), m = Number(bar.max);
   if (!Number.isFinite(v) || !Number.isFinite(m) || m <= 0) return null;
-
   return Math.max(0, Math.min(1, v / m));
 }
 function conditionColorInt(token) {
@@ -115,7 +99,6 @@ function conditionColorInt(token) {
   return HEALTH_RED;
 }
 
-/** Outline (border) color resolver */
 function resolvedOutlineColorInt(token) {
   const mode = getMode();
   if (mode === "custom") {
@@ -127,10 +110,8 @@ function resolvedOutlineColorInt(token) {
   return dispositionColorInt(token);
 }
 
-/** Glow color resolver (null = no glow requested) */
 function resolvedGlowColorInt(token) {
-  if (!getEnableGlow()) return null;
-
+  if (getDisableGlow()) return null; // glow disabled
   const mode = getMode();
   if (mode === "custom") {
     const isMyTarget = getEnableTarget() && !!token[TARGET_KEY];
@@ -139,16 +120,15 @@ function resolvedGlowColorInt(token) {
       : (getGlowColor() ?? getOutlineColor());
     return cssToInt(String(hex ?? "#88ccff"));
   }
-  // Non-custom modes: glow follows the outline color
   return resolvedOutlineColorInt(token);
 }
 
-// Legacy shim; can be removed if unused elsewhere.
+// Legacy shim; retained only if referenced elsewhere
 function resolvedColorInt(token) { return resolvedOutlineColorInt(token); }
 
-// ---------------------------------------------------------------------------------
-// PIXI filter helpers
-// ---------------------------------------------------------------------------------
+/* =================================================================================
+ * PIXI filter helpers
+ * ================================================================================= */
 
 function getOutlineCtor() { return PIXI?.filters?.OutlineFilter || globalThis.OutlineFilter; }
 function getGlowCtor()    { return PIXI?.filters?.GlowFilter   || globalThis.GlowFilter; }
@@ -260,9 +240,9 @@ function removeGlow(token) {
   mesh.refresh?.();
 }
 
-// ---------------------------------------------------------------------------------
-// Native border control
-// ---------------------------------------------------------------------------------
+/* =================================================================================
+ * Native border control
+ * ================================================================================= */
 
 function hideNativeBorder(token) {
   const b = token?.border;
@@ -276,9 +256,9 @@ function applyNativeBorderVisibility(token) {
   if (getHideDefault()) hideNativeBorder(token);
 }
 
-// ---------------------------------------------------------------------------------
-// Core refresh
-// ---------------------------------------------------------------------------------
+/* =================================================================================
+ * Core refresh
+ * ================================================================================= */
 
 function refreshToken(token) {
   if (!token) return;
@@ -292,20 +272,17 @@ function refreshToken(token) {
   const outlineColor = resolvedOutlineColorInt(token);
   const glowColor    = resolvedGlowColorInt(token); // may be null
 
-  if (show) {
-    // Outline ON/OFF
-    if (getEnableOutline()) {
-      applyOutline(token, outlineColor);
-    } else {
-      removeOutline(token);
-    }
+  const outlineWanted = !getDisableOutline();
+  const glowWanted    = !getDisableGlow();
 
-    // Glow ON/OFF
-    if (getEnableGlow()) {
-      applyGlow(token, glowColor ?? outlineColor);
-    } else {
-      removeGlow(token);
-    }
+  if (show) {
+    // Outline
+    if (outlineWanted) applyOutline(token, outlineColor);
+    else removeOutline(token);
+
+    // Glow
+    if (glowWanted) applyGlow(token, glowColor ?? outlineColor);
+    else removeGlow(token);
   } else {
     // Neither when not shown
     removeOutline(token);
@@ -315,9 +292,9 @@ function refreshToken(token) {
   applyNativeBorderVisibility(token);
 }
 
-// ---------------------------------------------------------------------------------
-// Hooks wiring
-// ---------------------------------------------------------------------------------
+/* =================================================================================
+ * Hooks wiring
+ * ================================================================================= */
 
 const Handlers = {};
 
@@ -370,7 +347,7 @@ Hooks.on("canvasReady", () => {
           // Per-user: recompute from my targets when toggled
           t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
         }
-        // Any setting change (mode, colors, enableOutline/glow, etc.) → refresh
+        // Any setting change (mode, colors, disableOutline/disableGlow, etc.) → refresh
         refreshToken(t);
       }
     }
