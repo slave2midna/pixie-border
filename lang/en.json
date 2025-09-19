@@ -42,6 +42,10 @@
         "name": "Enable glow",
         "hint": "If enabled, tokens will also get a soft glow around them."
       },
+      "enableOutline": {
+        "name": "Enable outline",
+        "hint": "If enabled, tokens will have a solid outline around them."
+      },
       "glowDistance": {
         "name": "Glow distance",
         "hint": "Glow radius in pixels. Larger values expand the glow outward."
