@@ -301,6 +301,7 @@ function refreshToken(token) {
   }
 
   applyNativeBorderVisibility(token);
+  applyNativeTargetVisibility(token);
 }
 
 /* =================================================================================
@@ -315,27 +316,32 @@ Hooks.on("canvasReady", () => {
 
   logOnce("ready", "info", `${LOG} ready — tokens:`, canvas.tokens?.placeables?.length ?? 0);
 
+  // Hover → show outline/glow (and sync native vis)
   Handlers.hover = Hooks.on("hoverToken", (token, hovered) => {
     token[HOVER_KEY] = hovered;
     refreshToken(token);
   });
 
+  // Control → same as hover (some systems only set .hover on control)
   Handlers.control = Hooks.on("controlToken", (token) => {
     token[HOVER_KEY] = !!token?.hover;
     refreshToken(token);
   });
 
+  // Targeting (per-user) → recompute my target flag then refresh
   Handlers.target = Hooks.on("targetToken", (user, token) => {
     token[TARGET_KEY] = !!game.user?.targets?.has?.(token);
     refreshToken(token);
   });
 
+  // Token disposition changes (only relevant for non-condition mode)
   Handlers.updateDoc = Hooks.on("updateToken", (doc, changes) => {
     if (getMode() !== "condition" && !("disposition" in changes)) return;
     const t = canvas.tokens?.get(doc.id);
     if (t) refreshToken(t);
   });
 
+  // Actor HP/condition changes (only relevant for condition mode)
   Handlers.updateActor = Hooks.on("updateActor", (actor) => {
     if (getMode() !== "condition") return;
     for (const t of canvas.tokens?.placeables ?? []) {
@@ -343,34 +349,42 @@ Hooks.on("canvasReady", () => {
     }
   });
 
+  // Settings changes (client-scoped) → update native vis or full refresh
   Handlers.updateSetting = Hooks.on("updateSetting", (setting) => {
     if (!setting?.key?.startsWith?.(`${MODULE_ID}.`)) return;
 
-    if (setting.key === `${MODULE_ID}.hideDefaultBorder`) {
-      const hide = !!setting.value;
+    if (setting.key === `${MODULE_ID}.hideDefaultBorder` ||
+        setting.key === `${MODULE_ID}.hideTargetIndicator`) {
+      // Apply the native vis toggles immediately
       for (const t of canvas.tokens?.placeables ?? []) {
-        if (hide) hideNativeBorder(t);
-        else if (t.border) { t.border.renderable = true; t.border.alpha = 1; t.border.visible = true; t.refresh?.(); }
+        applyNativeBorderVisibility(t);
+        applyNativeTargetVisibility(t);
       }
-    } else {
-      for (const t of canvas.tokens?.placeables ?? []) {
-        if (setting.key === `${MODULE_ID}.enableTarget`) {
-          t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
-        }
-        refreshToken(t);
+      return;
+    }
+
+    for (const t of canvas.tokens?.placeables ?? []) {
+      // Recompute TARGET_KEY when enableTarget flips
+      if (setting.key === `${MODULE_ID}.enableTarget`) {
+        t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
       }
+      refreshToken(t);
     }
   });
 
+  // Foundry’s own token refresh → keep native visuals in sync
   Handlers.refreshToken = Hooks.on("refreshToken", (token) => {
-    if (getHideDefault()) hideNativeBorder(token);
+    applyNativeBorderVisibility(token);
+    applyNativeTargetVisibility(token);
   });
 
+  // Clean up on token deletion
   Handlers.delete = Hooks.on("deleteToken", (scene, doc) => {
     const t = canvas.tokens?.get(doc.id);
     if (t) { removeGlow(t); removeOutline(t); }
   });
 
+  // Initial pass across my scene tokens
   const myTargets = game.user?.targets ?? new Set();
   for (const t of canvas.tokens?.placeables ?? []) {
     t[HOVER_KEY]  = !!t?.hover;
@@ -396,4 +410,3 @@ Hooks.once("shutdown", () => {
 
   logOnce("shutdown", "info", `${LOG} shutdown — handlers removed`);
 });
-
