@@ -22,7 +22,25 @@ Hooks.once("init", () => {
     hint: game.i18n.localize("pixie-border.settings.customColor.hint"),
     scope: "world",
     config: true,
-    type: new foundry.data.fields.ColorField({ initial: '#88ccff' })
+    type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
+  });
+
+  // Target Border Color
+  game.settings.register(MODULE_ID, "targetColor", {
+    name: game.i18n.localize("pixie-border.settings.targetColor.name"),
+    hint: game.i18n.localize("pixie-border.settings.targetColor.hint"),
+    scope: "world",
+    config: true,
+    type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
+  });
+
+  // Border Glow Color
+  game.settings.register(MODULE_ID, "glowColor", {
+    name: game.i18n.localize("pixie-border.settings.glowColor.name"),
+    hint: game.i18n.localize("pixie-border.settings.glowColor.hint"),
+    scope: "world",
+    config: true,
+    type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
 
   // Visual thickness (pixels)
@@ -89,4 +107,5 @@ Hooks.once("init", () => {
     range: { min: 0, max: 10, step: 0.5 }
   });
 });
+
 
