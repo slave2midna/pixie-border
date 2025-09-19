@@ -65,7 +65,7 @@ Hooks.once("init", () => {
     range: { min: 0, max: 10, step: 0.5 }
   });
 
-  // Color Mode (with inline help)
+  // Color Mode
   game.settings.register(MODULE_ID, "mode", {
     name: game.i18n.localize("pixie-border.settings.mode.name"),
     hint: modeHint,
@@ -76,14 +76,12 @@ Hooks.once("init", () => {
     choices: { disposition: modeDisp, custom: modeCust, condition: modeCond }
   });
 
-  // Custom color (String + hex; UI shows color input in v13)
+  // Custom color
   game.settings.register(MODULE_ID, "customColor", {
     name: game.i18n.localize("pixie-border.settings.customColor.name"),
     hint: game.i18n.localize("pixie-border.settings.customColor.hint"),
     scope: "world",
     config: true,
-    type: String,
-    default: "#88ccff"
+    type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
 });
-
