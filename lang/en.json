@@ -6,52 +6,52 @@
         "hint": "Use Foundry disposition colors, a custom color, or colors based on health condition.",
         "choices": {
           "disposition": "Disposition colors",
-          "custom": "Custom color",
+          "custom": "Custom colors",
           "condition": "Condition colors"
         }
       },
       "outlineColor": {
-        "name": "Custom color (hex or CSS)",
-        "hint": "Used only when Color mode = Custom. Examples: #88ccff or rgb(136,204,255)."
+        "name": "Outline Color",
+        "hint": "Used only when Color mode is Custom. Default: #88ccff"
       },
-      "targetColor": {
+      "targetOutlineColor": {
         "name": "Target Outline Color",
-        "hint": "Used when Color mode = Custom. Sets the border color for targeted tokens. Default: #88ccff"
+        "hint": "Used when Color mode is Custom and target highlighting is active. Sets the outline color for targeted tokens. Default: #88ccff"
       },
       "glowColor": {
         "name": "Glow Color",
-        "hint": "Used when Color mode = Custom. Sets the color of the border glow. Default: #88ccff"
+        "hint": "Used when Color mode is Custom (and glow is not disabled). Sets the glow color. Default: #88ccff"
       },
       "targetGlowColor": {
         "name": "Target Glow Color",
-        "hint": "Used when Color mode = Custom. Sets the glow color for targeted tokens. Default: #88ccff"
+        "hint": "Used when Color mode is Custom and target highlighting is active. Sets the glow color for targeted tokens. Default: #88ccff"
       },
       "thickness": {
-        "name": "Border thickness",
+        "name": "Outline Thickness",
         "hint": "Outline thickness in pixels."
       },
       "hideDefaultBorder": {
         "name": "Hide Default Foundry Border",
         "hint": "Hide Foundry’s built-in selection border on tokens."
       },
-      "enableTarget": {
-        "name": "Enable target border",
-        "hint": "Also show the outline and glow on tokens you target."
-      },
       "disableOutline": {
-        "name": "Disable outline",
-        "hint": "If enabled, tokens will not render the solid outline."
+        "name": "Disable Outline",
+        "hint": "If enabled, tokens will not render the custom outline."
+      },
+      "enableTarget": {
+        "name": "Enable Target Border",
+        "hint": "Also apply the outline/glow to tokens you target."
       },
       "disableGlow": {
-        "name": "Disable glow",
+        "name": "Disable Glow",
         "hint": "If enabled, tokens will not render the glow effect."
       },
       "glowDistance": {
-        "name": "Glow distance",
+        "name": "Glow Distance",
         "hint": "Glow radius in pixels. Larger values expand the glow outward."
       },
       "glowOuterStrength": {
-        "name": "Glow outer strength",
+        "name": "Glow Outer Strength",
         "hint": "Intensity of the outer glow. Higher values are brighter."
       }
     }
