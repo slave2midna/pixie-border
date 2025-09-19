@@ -6,13 +6,21 @@
         "hint": "Use Foundry disposition colors, a custom color, or colors based on health condition.",
         "choices": {
           "disposition": "Disposition colors",
-          "custom": "Custom color",
+          "custom": "Custom colors",
           "condition": "Condition colors"
         }
       },
       "customColor": {
         "name": "Custom color",
-        "hint": "Used only when Color mode = Custom. Default: #88ccff or rgb(136,204,255)."
+        "hint": "Used only when Color mode is Custom. Default: #88ccff"
+      },
+      "targetColor": {
+        "name": "Target border color",
+        "hint": "Used when Color mode is Custom and Target Border is enabled. Sets the border color for the targeted token. Default: #88ccff"
+      },
+      "glowColor": {
+        "name": "Border glow color",
+        "hint": "Used when Color mode is Custom and Border Glow is enabled. Sets the color of the border glow. Default: #88ccff"
       },
       "thickness": {
         "name": "Border thickness",
