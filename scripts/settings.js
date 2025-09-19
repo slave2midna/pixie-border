@@ -71,7 +71,17 @@ Hooks.once("init", () => {
     config: true,
     type: Boolean,
     default: false,
-    requiresReload: true 
+    requiresReload: true
+  });
+
+  // Enable outline (new)
+  game.settings.register(MODULE_ID, "enableOutline", {
+    name: game.i18n.localize("pixie-border.settings.enableOutline.name"),
+    hint: game.i18n.localize("pixie-border.settings.enableOutline.hint"),
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true
   });
 
   // Enable target border
@@ -116,6 +126,3 @@ Hooks.once("init", () => {
     range: { min: 0, max: 10, step: 0.5 }
   });
 });
-
-
-
