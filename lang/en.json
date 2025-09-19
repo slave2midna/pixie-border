@@ -10,7 +10,7 @@
           "condition": "Condition colors"
         }
       },
-      "customColor": {
+      "outlineColor": {
         "name": "Custom color (hex or CSS)",
         "hint": "Used only when Color mode = Custom. Examples: #88ccff or rgb(136,204,255)."
       },
