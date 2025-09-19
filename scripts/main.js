@@ -1,11 +1,10 @@
 const MODULE_ID  = "pixie-border";
 
-// Token flags
-const FILTER_KEY = "_pixiOutlineFilter";
-const FILTER_ON  = "_pixiOutlineActive";
-const HOVER_KEY  = "_pixiHover";
-const TARGET_KEY = "_pixiTarget";
-const GLOW_KEY   = "_pixiGlowFilter";
+// Token flags (store filter instances directly on the token)
+const OUTLINE_KEY = "_pixiOutlineFilter";
+const HOVER_KEY   = "_pixiHover";
+const TARGET_KEY  = "_pixiTarget";
+const GLOW_KEY    = "_pixiGlowFilter";
 
 // PIXI filter defaults
 const OUTLINE_QUALITY = 1;
@@ -16,18 +15,37 @@ const LOG = "[pixie-border]";
 const _onceSet = new Set();
 const logOnce = (k, level, ...msg) => { if (_onceSet.has(k)) return; _onceSet.add(k); (console[level]||console.log)(LOG, ...msg); };
 
-// Settings helpers
+// ---------------------------------------------------------------------------------
+// Settings helpers (with back-compat to legacy keys)
+// ---------------------------------------------------------------------------------
+
 function getRenderable(token)  { return token?.mesh ?? token?.icon ?? null; }
 function getMode()             { return game.settings.get(MODULE_ID, "mode"); }
-function getCustomColor()      { return game.settings.get(MODULE_ID, "customColor"); }
-function getTargetColor()      { return game.settings.get(MODULE_ID, "targetColor"); }
-function getGlowColorSetting() { return game.settings.get(MODULE_ID, "glowColor"); }
-function getTargetGlowColor()  { return game.settings.get(MODULE_ID, "targetGlowColor"); }
-function getEnableOutline()    { return !!game.settings.get(MODULE_ID, "enableOutline"); } // NEW
+
+// Colors — prefer new keys; fall back to legacy keys for compatibility
+function getOutlineColor() {
+  // NEW: outlineColor; LEGACY: customColor
+  return game.settings.get(MODULE_ID, "outlineColor") ?? game.settings.get(MODULE_ID, "customColor");
+}
+function getTargetOutlineColor() {
+  // NEW: targetOutlineColor; LEGACY: targetColor
+  return game.settings.get(MODULE_ID, "targetOutlineColor") ?? game.settings.get(MODULE_ID, "targetColor");
+}
+function getGlowColor() {
+  // Already named glowColor; function name kept consistent
+  return game.settings.get(MODULE_ID, "glowColor");
+}
+function getTargetGlowColor() {
+  return game.settings.get(MODULE_ID, "targetGlowColor");
+}
+
+// Toggles
+function getEnableOutline()    { return !!game.settings.get(MODULE_ID, "enableOutline"); }
 function getEnableTarget()     { return !!game.settings.get(MODULE_ID, "enableTarget"); }
 function getHideDefault()      { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
 function getEnableGlow()       { return !!game.settings.get(MODULE_ID, "enableGlow"); }
 
+// Numbers
 function getThickness() {
   let t = Number(game.settings.get(MODULE_ID, "thickness"));
   if (!Number.isFinite(t)) t = 3;
@@ -44,6 +62,7 @@ function getGlowOuterStrength() {
   return Math.min(10, Math.max(0, s));
 }
 
+// Expect a "#rrggbb" string; fallback to white on bad input
 function cssToInt(color) {
   if (typeof color === "string") {
     if (foundry?.utils?.colorStringToHex) {
@@ -59,7 +78,11 @@ function cssToInt(color) {
   return 0xffffff;
 }
 
-// Disposition color helpers
+// ---------------------------------------------------------------------------------
+// Color resolvers
+// ---------------------------------------------------------------------------------
+
+// Disposition colors (fallback map in case config is missing)
 const DISP_MAP = { [-1]:0xe74c3c, [0]:0xf1c40f, [1]:0x2ecc71, [2]:0x3498db, [3]:0x9b59b6 };
 function dispositionColorInt(token) {
   const disp = token?.document?.disposition ?? 0;
@@ -92,19 +115,19 @@ function conditionColorInt(token) {
   return HEALTH_RED;
 }
 
-// Outline color resolver
+/** Outline (border) color resolver */
 function resolvedOutlineColorInt(token) {
   const mode = getMode();
   if (mode === "custom") {
     const useTarget = getEnableTarget() && !!token[TARGET_KEY];
-    const hex = useTarget ? getTargetColor() : getCustomColor();
+    const hex = useTarget ? getTargetOutlineColor() : getOutlineColor();
     return cssToInt(String(hex ?? "#88ccff"));
   }
   if (mode === "condition") return conditionColorInt(token);
   return dispositionColorInt(token);
 }
 
-// Glow color resolver
+/** Glow color resolver (null = no glow requested) */
 function resolvedGlowColorInt(token) {
   if (!getEnableGlow()) return null;
 
@@ -112,17 +135,21 @@ function resolvedGlowColorInt(token) {
   if (mode === "custom") {
     const isMyTarget = getEnableTarget() && !!token[TARGET_KEY];
     const hex = isMyTarget
-      ? (getTargetGlowColor() ?? getGlowColorSetting() ?? getCustomColor())
-      : (getGlowColorSetting() ?? getCustomColor());
+      ? (getTargetGlowColor() ?? getGlowColor() ?? getOutlineColor())
+      : (getGlowColor() ?? getOutlineColor());
     return cssToInt(String(hex ?? "#88ccff"));
   }
+  // Non-custom modes: glow follows the outline color
   return resolvedOutlineColorInt(token);
 }
 
 // Legacy shim; can be removed if unused elsewhere.
 function resolvedColorInt(token) { return resolvedOutlineColorInt(token); }
 
+// ---------------------------------------------------------------------------------
 // PIXI filter helpers
+// ---------------------------------------------------------------------------------
+
 function getOutlineCtor() { return PIXI?.filters?.OutlineFilter || globalThis.OutlineFilter; }
 function getGlowCtor()    { return PIXI?.filters?.GlowFilter   || globalThis.GlowFilter; }
 
@@ -137,11 +164,11 @@ function applyOutline(token, colorInt) {
     return;
   }
 
-  let f = token[FILTER_KEY];
+  let f = token[OUTLINE_KEY];
   if (!(f instanceof OutlineFilter)) {
     try {
       f = new OutlineFilter(getThickness(), colorInt, OUTLINE_QUALITY);
-      token[FILTER_KEY] = f;
+      token[OUTLINE_KEY] = f;
     } catch (e) {
       logOnce("outline-ctor", "warn", "Failed to construct OutlineFilter:", e);
       return;
@@ -158,21 +185,19 @@ function applyOutline(token, colorInt) {
     mesh.filters = Array.isArray(filters) ? filters.concat([f]) : [f];
   }
 
-  token[FILTER_ON] = true;
   mesh.refresh?.();
 }
 function removeOutline(token) {
   const mesh = getRenderable(token);
-  const f = token[FILTER_KEY];
-  if (!mesh || !f) { token[FILTER_ON] = false; return; }
+  const f = token[OUTLINE_KEY];
+  if (!mesh || !f) return;
   try {
     const filters = mesh.filters;
     if (Array.isArray(filters) && filters.includes(f)) {
       mesh.filters = filters.filter(x => x !== f);
     }
   } catch {}
-  delete token[FILTER_KEY];
-  token[FILTER_ON] = false;
+  delete token[OUTLINE_KEY];
   mesh.refresh?.();
 }
 
@@ -187,7 +212,6 @@ function applyGlow(token, colorInt) {
     return;
   }
 
-  // Guard color
   const useColor = (typeof colorInt === "number" && Number.isFinite(colorInt)) ? colorInt : 0xffffff;
 
   let g = token[GLOW_KEY];
@@ -236,7 +260,10 @@ function removeGlow(token) {
   mesh.refresh?.();
 }
 
+// ---------------------------------------------------------------------------------
 // Native border control
+// ---------------------------------------------------------------------------------
+
 function hideNativeBorder(token) {
   const b = token?.border;
   if (!b) return;
@@ -249,7 +276,10 @@ function applyNativeBorderVisibility(token) {
   if (getHideDefault()) hideNativeBorder(token);
 }
 
-// Token refresh
+// ---------------------------------------------------------------------------------
+// Core refresh
+// ---------------------------------------------------------------------------------
+
 function refreshToken(token) {
   if (!token) return;
 
@@ -265,13 +295,9 @@ function refreshToken(token) {
   if (show) {
     // Outline ON/OFF
     if (getEnableOutline()) {
-      if (!token[FILTER_ON]) applyOutline(token, outlineColor);
-      else {
-        const f = token[FILTER_KEY];
-        if (f) { f.thickness = getThickness(); f.color = outlineColor; }
-      }
+      applyOutline(token, outlineColor);
     } else {
-      if (token[FILTER_ON]) removeOutline(token);
+      removeOutline(token);
     }
 
     // Glow ON/OFF
@@ -289,7 +315,10 @@ function refreshToken(token) {
   applyNativeBorderVisibility(token);
 }
 
+// ---------------------------------------------------------------------------------
 // Hooks wiring
+// ---------------------------------------------------------------------------------
+
 const Handlers = {};
 
 Hooks.on("canvasReady", () => {
@@ -356,6 +385,7 @@ Hooks.on("canvasReady", () => {
     if (t) { removeGlow(t); removeOutline(t); }
   });
 
+  // Initial state across tokens (hover + MY targets)
   const myTargets = game.user?.targets ?? new Set();
   for (const t of canvas.tokens?.placeables ?? []) {
     t[HOVER_KEY]  = !!t?.hover;
