@@ -1,42 +1,47 @@
 const MODULE_ID  = "pixie-border";
+
+// Token flags
 const FILTER_KEY = "_pixiOutlineFilter";
 const FILTER_ON  = "_pixiOutlineActive";
 const HOVER_KEY  = "_pixiHover";
 const TARGET_KEY = "_pixiTarget";
 const GLOW_KEY   = "_pixiGlowFilter";
 
+// PIXI filter defaults
 const OUTLINE_QUALITY = 1;
 const OUTLINE_PADDING = 0;
 
-// Console Log
+// Console helpers
 const LOG = "[pixie-border]";
-const once = new Set();
-const logOnce = (k, level, ...msg) => { if (once.has(k)) return; once.add(k); (console[level]||console.log)(LOG, ...msg); };
+const _onceSet = new Set();
+const logOnce = (k, level, ...msg) => { if (_onceSet.has(k)) return; _onceSet.add(k); (console[level]||console.log)(LOG, ...msg); };
 
-// Setting Helpers
+// Settings helpers
 function getRenderable(token) { return token?.mesh ?? token?.icon ?? null; }
-function getMode()        { return game.settings.get(MODULE_ID, "mode"); }
-function getCustomColor() { return game.settings.get(MODULE_ID, "customColor"); }
-function getEnableTarget(){ return !!game.settings.get(MODULE_ID, "enableTarget"); }
-function getThickness()   {
+function getMode()           { return game.settings.get(MODULE_ID, "mode"); }
+function getCustomColor()    { return game.settings.get(MODULE_ID, "customColor"); }
+function getTargetColor()    { return game.settings.get(MODULE_ID, "targetColor"); }
+function getGlowColorSetting(){ return game.settings.get(MODULE_ID, "glowColor"); }
+function getEnableTarget()   { return !!game.settings.get(MODULE_ID, "enableTarget"); }
+function getHideDefault()    { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
+function getEnableGlow()     { return !!game.settings.get(MODULE_ID, "enableGlow"); }
+
+function getThickness() {
   let t = Number(game.settings.get(MODULE_ID, "thickness"));
   if (!Number.isFinite(t)) t = 3;
   return Math.min(5, Math.max(1, Math.round(t)));
 }
-function getHideDefault() { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
-function getEnableGlow()  { return !!game.settings.get(MODULE_ID, "enableGlow"); }
-function getGlowDistance(){
+function getGlowDistance() {
   let d = Number(game.settings.get(MODULE_ID, "glowDistance"));
   if (!Number.isFinite(d)) d = 10;
   return Math.min(64, Math.max(1, Math.round(d)));
 }
-function getGlowOuterStrength(){
+function getGlowOuterStrength() {
   let s = Number(game.settings.get(MODULE_ID, "glowOuterStrength"));
   if (!Number.isFinite(s)) s = 4;
   return Math.min(10, Math.max(0, s));
 }
 
-// Custom color helper
 function cssToInt(color) {
   if (typeof color === "string") {
     if (foundry?.utils?.colorStringToHex) {
@@ -61,7 +66,7 @@ function dispositionColorInt(token) {
   return raw != null ? cssToInt(raw) : (DISP_MAP[disp] ?? 0xffffff);
 }
 
-// Condition color helpers
+// Condition color resolver
 const HEALTH_GREEN  = 0x2ecc71; // ≥ 50%
 const HEALTH_YELLOW = 0xf1c40f; // ≥ 25%
 const HEALTH_RED    = 0xe74c3c; // < 25%
@@ -78,7 +83,6 @@ function getHpPercent(token) {
 
   return Math.max(0, Math.min(1, v / m));
 }
-
 function conditionColorInt(token) {
   const pct = getHpPercent(token);
   if (pct == null) return dispositionColorInt(token);
@@ -87,26 +91,46 @@ function conditionColorInt(token) {
   return HEALTH_RED;
 }
 
-// Color mode resolver
-function resolvedColorInt(token) {
+// Outline color resolver
+function resolvedOutlineColorInt(token) {
   const mode = getMode();
-  if (mode === "custom")     return cssToInt(String(getCustomColor() ?? "#88ccff"));
-  if (mode === "condition")  return conditionColorInt(token);
+  if (mode === "custom") {
+    const useTarget = getEnableTarget() && !!token[TARGET_KEY];
+    const hex = useTarget ? getTargetColor() : getCustomColor();
+    return cssToInt(String(hex ?? "#88ccff"));
+  }
+  if (mode === "condition") return conditionColorInt(token);
   return dispositionColorInt(token);
 }
 
-// Filter helpers
+// Glow color resolver
+function resolvedGlowColorInt(token) {
+  if (!getEnableGlow()) return null;
+  const mode = getMode();
+  if (mode === "custom") {
+    const hex = getGlowColorSetting() ?? getCustomColor();
+    return cssToInt(String(hex ?? "#88ccff"));
+  }
+  return resolvedOutlineColorInt(token);
+}
+
+// Legacy shim; can be removed if unused elsewhere.
+function resolvedColorInt(token) {
+  return resolvedOutlineColorInt(token);
+}
+
+// PIXI filter helpers
 function getOutlineCtor() { return PIXI?.filters?.OutlineFilter || globalThis.OutlineFilter; }
 function getGlowCtor()    { return PIXI?.filters?.GlowFilter   || globalThis.GlowFilter; }
 
-// PIXI Outline filter
+// Outline
 function applyOutline(token, colorInt) {
   const mesh = getRenderable(token);
   if (!mesh) return;
 
   const OutlineFilter = getOutlineCtor();
   if (!OutlineFilter) {
-    logOnce("outline-missing", "warn", "OutlineFilter missing. Check that vendor/pixi-filters.min.js is loaded before this script.");
+    logOnce("outline-missing", "warn", "OutlineFilter missing. Ensure scripts/pixi-filters.js is loaded before this script.");
     return;
   }
 
@@ -149,16 +173,19 @@ function removeOutline(token) {
   mesh.refresh?.();
 }
 
-// PIXI Glow filter
+// Glow
 function applyGlow(token, colorInt) {
   const mesh = getRenderable(token);
   if (!mesh) return;
 
   const GlowFilter = getGlowCtor();
   if (!GlowFilter) {
-    logOnce("glow-missing", "warn", "GlowFilter missing. Check that vendor/pixi-filters.min.js is loaded before this script.");
+    logOnce("glow-missing", "warn", "GlowFilter missing. Ensure scripts/pixi-filters.js is loaded before this script.");
     return;
   }
+
+  // Guard color
+  const useColor = (typeof colorInt === "number" && Number.isFinite(colorInt)) ? colorInt : 0xffffff;
 
   let g = token[GLOW_KEY];
   if (!(g instanceof GlowFilter)) {
@@ -167,7 +194,7 @@ function applyGlow(token, colorInt) {
         distance: getGlowDistance(),
         innerStrength: 0,
         outerStrength: getGlowOuterStrength(),
-        color: colorInt,
+        color: useColor,
         alpha: 1,
         quality: 0.15,
         knockout: false
@@ -184,7 +211,7 @@ function applyGlow(token, colorInt) {
   g.alpha         = 1;
   g.quality       = 0.15;
   g.knockout      = false;
-  g.color         = colorInt;
+  g.color         = useColor;
 
   const filters = mesh.filters;
   if (!Array.isArray(filters) || !filters.includes(g)) {
@@ -223,21 +250,21 @@ function applyNativeBorderVisibility(token) {
 function refreshToken(token) {
   if (!token) return;
 
-  // Visible if controlled, hovered, or (optionally) targeted BY ME
   const show =
     token.controlled ||
     !!token[HOVER_KEY] ||
     (getEnableTarget() && !!token[TARGET_KEY]);
 
-  const color = resolvedColorInt(token);
+  const outlineColor = resolvedOutlineColorInt(token);
+  const glowColor    = resolvedGlowColorInt(token);
 
   if (show) {
-    if (!token[FILTER_ON]) applyOutline(token, color);
+    if (!token[FILTER_ON]) applyOutline(token, outlineColor);
     else if (token[FILTER_ON]) {
       const f = token[FILTER_KEY];
-      if (f) { f.thickness = getThickness(); f.color = color; }
+      if (f) { f.thickness = getThickness(); f.color = outlineColor; }
     }
-    if (getEnableGlow()) applyGlow(token, color);
+    if (getEnableGlow()) applyGlow(token, (glowColor ?? outlineColor));
     else removeGlow(token);
   } else if (token[FILTER_ON]) {
     removeOutline(token);
@@ -249,7 +276,7 @@ function refreshToken(token) {
   applyNativeBorderVisibility(token);
 }
 
-// Hooks and Handlers
+// Hooks wiring
 const Handlers = {};
 
 Hooks.on("canvasReady", () => {
@@ -263,27 +290,23 @@ Hooks.on("canvasReady", () => {
     refreshToken(token);
   });
 
-  Handlers.control = Hooks.on("controlToken", (token, controlled) => {
+  Handlers.control = Hooks.on("controlToken", (token) => {
     token[HOVER_KEY] = !!token?.hover;
     refreshToken(token);
   });
 
-  // Per-user targeting: reflect ONLY my own targets
-  Handlers.target = Hooks.on("targetToken", (user, token /*, targeted */) => {
-    // Always recompute from my local selection so any change (mine or others) keeps me accurate.
+  Handlers.target = Hooks.on("targetToken", (user, token) => {
     token[TARGET_KEY] = !!game.user?.targets?.has?.(token);
     refreshToken(token);
   });
 
-  // Recolor on disposition change, or on any token change if mode=condition (HP bar may be token-side)
   Handlers.updateDoc = Hooks.on("updateToken", (doc, changes) => {
     if (getMode() !== "condition" && !("disposition" in changes)) return;
     const t = canvas.tokens?.get(doc.id);
     if (t) refreshToken(t);
   });
 
-  // Live-refresh on actor HP edits (covers linked and unlinked actors)
-  Handlers.updateActor = Hooks.on("updateActor", (actor, changes) => {
+  Handlers.updateActor = Hooks.on("updateActor", (actor) => {
     if (getMode() !== "condition") return;
     for (const t of canvas.tokens?.placeables ?? []) {
       if (t.document?.actorId === actor.id) refreshToken(t);
@@ -292,6 +315,7 @@ Hooks.on("canvasReady", () => {
 
   Handlers.updateSetting = Hooks.on("updateSetting", (setting) => {
     if (!setting?.key?.startsWith?.(`${MODULE_ID}.`)) return;
+
     if (setting.key === `${MODULE_ID}.hideDefaultBorder`) {
       const hide = !!setting.value;
       for (const t of canvas.tokens?.placeables ?? []) {
@@ -299,10 +323,8 @@ Hooks.on("canvasReady", () => {
         else if (t.border) { t.border.renderable = true; t.border.alpha = 1; t.border.visible = true; t.refresh?.(); }
       }
     } else {
-      // enableTarget / mode / colors / glow etc.
       for (const t of canvas.tokens?.placeables ?? []) {
         if (setting.key === `${MODULE_ID}.enableTarget`) {
-          // Per-user: recompute from my targets when toggled
           t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
         }
         refreshToken(t);
@@ -319,7 +341,6 @@ Hooks.on("canvasReady", () => {
     if (t) { removeGlow(t); removeOutline(t); }
   });
 
-  // Initial state across tokens (hover + MY targets)
   const myTargets = game.user?.targets ?? new Set();
   for (const t of canvas.tokens?.placeables ?? []) {
     t[HOVER_KEY]  = !!t?.hover;
@@ -345,4 +366,3 @@ Hooks.once("shutdown", () => {
 
   logOnce("shutdown", "info", `${LOG} shutdown — handlers removed`);
 });
-
