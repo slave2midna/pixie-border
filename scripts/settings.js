@@ -66,19 +66,6 @@ Hooks.once("init", () => {
   });
 
   // Color Mode (with inline help)
-  const modeDisp = game.i18n.localize("pixie-border.settings.mode.choices.disposition");
-  const modeCust = game.i18n.localize("pixie-border.settings.mode.choices.custom");
-  const modeCond = game.i18n.localize("pixie-border.settings.mode.choices.condition");
-  const modeHint = `
-<div style="margin-top:0.25rem">
-  <div style="font-weight:600">${game.i18n.localize("pixie-border.settings.mode.hint")}</div>
-  <ul style="margin:0.25rem 0 0.5rem 1.25rem; list-style: disc;">
-    <li><b>${modeDisp}:</b> ${game.i18n.localize("pixie-border.mode.help.disposition")}</li>
-    <li><b>${modeCust}:</b> ${game.i18n.localize("pixie-border.mode.help.custom")}</li>
-    <li><b>${modeCond}:</b> ${game.i18n.localize("pixie-border.mode.help.condition")}</li>
-  </ul>
-</div>`.trim();
-
   game.settings.register(MODULE_ID, "mode", {
     name: game.i18n.localize("pixie-border.settings.mode.name"),
     hint: modeHint,
@@ -99,3 +86,4 @@ Hooks.once("init", () => {
     default: "#88ccff"
   });
 });
+
