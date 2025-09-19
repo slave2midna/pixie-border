@@ -1,9 +1,39 @@
 {
   "pixie-border": {
     "settings": {
+      "hideDefaultBorder": {
+        "name": "Hide Default Foundry Border",
+        "hint": "Remove Foundry’s built-in selection border on tokens."
+      },
+      "enableTarget": {
+        "name": "Enable Target Border",
+        "hint": "Also show the outline and glow on tokens you target."
+      },
+      "disableOutline": {
+        "name": "Disable Outline Filter",
+        "hint": "Turn this on to completely disable the outline filter."
+      },
+      "disableGlow": {
+        "name": "Disable Glow Filter",
+        "hint": "Turn this on to completely disable the glow filter."
+      },
+
+      "thickness": {
+        "name": "Outline Thickness",
+        "hint": "Width of the outline in pixels."
+      },
+      "glowDistance": {
+        "name": "Glow Distance",
+        "hint": "Glow radius in pixels. Larger values expand the glow outward."
+      },
+      "glowOuterStrength": {
+        "name": "Glow Strength",
+        "hint": "Intensity of the outer glow. Higher values are brighter."
+      },
+
       "mode": {
-        "name": "Border color mode",
-        "hint": "Use Foundry disposition colors, a custom color, or colors based on health condition.",
+        "name": "Color Mode",
+        "hint": "Use Foundry disposition colors, custom colors, or colors based on health condition.",
         "choices": {
           "disposition": "Disposition colors",
           "custom": "Custom colors",
@@ -12,47 +42,19 @@
       },
       "outlineColor": {
         "name": "Outline Color",
-        "hint": "Used only when Color mode is Custom. Default: #88ccff"
+        "hint": "Used only when Color Mode is Custom and Outline is enabled. Sets the outline color for selected tokens. Default: #88ccff"
       },
       "targetOutlineColor": {
         "name": "Target Outline Color",
-        "hint": "Used when Color mode is Custom and target highlighting is active. Sets the outline color for targeted tokens. Default: #88ccff"
+        "hint": "Used when Color mode is Custom and Target Outline is enabled. Sets the outline color for targeted tokens. Default: #88ccff"
       },
       "glowColor": {
         "name": "Glow Color",
-        "hint": "Used when Color mode is Custom (and glow is not disabled). Sets the glow color. Default: #88ccff"
+        "hint": "Used when Color mode is Custom and Glow is enabled. Sets the glow color for selected tokens. Default: #88ccff"
       },
       "targetGlowColor": {
         "name": "Target Glow Color",
-        "hint": "Used when Color mode is Custom and target highlighting is active. Sets the glow color for targeted tokens. Default: #88ccff"
-      },
-      "thickness": {
-        "name": "Outline Thickness",
-        "hint": "Outline thickness in pixels."
-      },
-      "hideDefaultBorder": {
-        "name": "Hide Default Foundry Border",
-        "hint": "Hide Foundry’s built-in selection border on tokens."
-      },
-      "disableOutline": {
-        "name": "Disable Outline",
-        "hint": "If enabled, tokens will not render the custom outline."
-      },
-      "enableTarget": {
-        "name": "Enable Target Border",
-        "hint": "Also apply the outline/glow to tokens you target."
-      },
-      "disableGlow": {
-        "name": "Disable Glow",
-        "hint": "If enabled, tokens will not render the glow effect."
-      },
-      "glowDistance": {
-        "name": "Glow Distance",
-        "hint": "Glow radius in pixels. Larger values expand the glow outward."
-      },
-      "glowOuterStrength": {
-        "name": "Glow Outer Strength",
-        "hint": "Intensity of the outer glow. Higher values are brighter."
+        "hint": "Used when Color mode is Custom and Target Glow is enabled. Sets the glow color for targeted tokens. Default: #88ccff"
       }
     }
   }
