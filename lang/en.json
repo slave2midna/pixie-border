@@ -22,6 +22,10 @@
         "name": "Border glow color",
         "hint": "Used when Color mode is Custom and Border Glow is enabled. Sets the color of the border glow. Default: #88ccff"
       },
+      "targetGlowColor": {
+        "name": "Target glow color",
+        "hint": "Used when Color mode is Custom, Target Border is enabled, and Border Glow is enabled. Sets the glow color for targeted tokens. Default: #88ccff"
+      },
       "thickness": {
         "name": "Border thickness",
         "hint": "Outline thickness in pixels."
