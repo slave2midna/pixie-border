@@ -22,8 +22,7 @@ Hooks.once("init", () => {
     hint: game.i18n.localize("pixie-border.settings.customColor.hint"),
     scope: "world",
     config: true,
-    type: String,
-    default: "#88ccff"
+    type: new foundry.data.fields.ColorField({ initial: '#88ccff' })
   });
 
   // Visual thickness (pixels)
@@ -90,3 +89,4 @@ Hooks.once("init", () => {
     range: { min: 0, max: 10, step: 0.5 }
   });
 });
+
