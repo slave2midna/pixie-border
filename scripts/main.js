@@ -1,16 +1,16 @@
 const MODULE_ID  = "pixie-border";
 
-/** Token flags: store filter instances directly on the token */
+// Token flags
 const OUTLINE_KEY = "_pixiOutlineFilter";
 const HOVER_KEY   = "_pixiHover";
 const TARGET_KEY  = "_pixiTarget";
 const GLOW_KEY    = "_pixiGlowFilter";
 
-/** PIXI filter defaults */
+// PIXI filter defaults
 const OUTLINE_QUALITY = 1;
 const OUTLINE_PADDING = 0;
 
-/** Console helpers */
+// Log helper
 const LOG = "[pixie-border]";
 const _onceSet = new Set();
 const logOnce = (k, level, ...msg) => { if (_onceSet.has(k)) return; _onceSet.add(k); (console[level]||console.log)(LOG, ...msg); };
@@ -51,7 +51,7 @@ function getGlowOuterStrength() {
   return Math.min(10, Math.max(0, s));
 }
 
-/** Expect a "#rrggbb" string; fallback to white on bad input */
+// Convert #rrggbb to integer
 function cssToInt(color) {
   if (typeof color === "string") {
     if (foundry?.utils?.colorStringToHex) {
@@ -111,7 +111,7 @@ function resolvedOutlineColorInt(token) {
 }
 
 function resolvedGlowColorInt(token) {
-  if (getDisableGlow()) return null; // glow disabled
+  if (getDisableGlow()) return null;
   const mode = getMode();
   if (mode === "custom") {
     const isMyTarget = getEnableTarget() && !!token[TARGET_KEY];
@@ -124,7 +124,7 @@ function resolvedGlowColorInt(token) {
 }
 
 // Legacy shim; retained only if referenced elsewhere
-function resolvedColorInt(token) { return resolvedOutlineColorInt(token); }
+// function resolvedColorInt(token) { return resolvedOutlineColorInt(token); }
 
 /* =================================================================================
  * PIXI filter helpers
@@ -257,7 +257,7 @@ function applyNativeBorderVisibility(token) {
 }
 
 /* =================================================================================
- * Core refresh
+ * Token refresh
  * ================================================================================= */
 
 function refreshToken(token) {
@@ -284,7 +284,6 @@ function refreshToken(token) {
     if (glowWanted) applyGlow(token, glowColor ?? outlineColor);
     else removeGlow(token);
   } else {
-    // Neither when not shown
     removeOutline(token);
     removeGlow(token);
   }
@@ -344,10 +343,8 @@ Hooks.on("canvasReady", () => {
     } else {
       for (const t of canvas.tokens?.placeables ?? []) {
         if (setting.key === `${MODULE_ID}.enableTarget`) {
-          // Per-user: recompute from my targets when toggled
           t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
         }
-        // Any setting change (mode, colors, disableOutline/disableGlow, etc.) → refresh
         refreshToken(t);
       }
     }
@@ -362,7 +359,6 @@ Hooks.on("canvasReady", () => {
     if (t) { removeGlow(t); removeOutline(t); }
   });
 
-  // Initial state across tokens (hover + MY targets)
   const myTargets = game.user?.targets ?? new Set();
   for (const t of canvas.tokens?.placeables ?? []) {
     t[HOVER_KEY]  = !!t?.hover;
