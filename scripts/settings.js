@@ -16,7 +16,7 @@ Hooks.once("init", () => {
     }
   });
 
-  // Custom color (used only when mode=custom)
+  // Custom Outline Color
   game.settings.register(MODULE_ID, "customColor", {
     name: game.i18n.localize("pixie-border.settings.customColor.name"),
     hint: game.i18n.localize("pixie-border.settings.customColor.hint"),
@@ -25,7 +25,7 @@ Hooks.once("init", () => {
     type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
 
-  // Target Border Color
+  // Custom Target Outline Color
   game.settings.register(MODULE_ID, "targetColor", {
     name: game.i18n.localize("pixie-border.settings.targetColor.name"),
     hint: game.i18n.localize("pixie-border.settings.targetColor.hint"),
@@ -34,10 +34,19 @@ Hooks.once("init", () => {
     type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
 
-  // Border Glow Color
+  // Custom Glow Color
   game.settings.register(MODULE_ID, "glowColor", {
     name: game.i18n.localize("pixie-border.settings.glowColor.name"),
     hint: game.i18n.localize("pixie-border.settings.glowColor.hint"),
+    scope: "world",
+    config: true,
+    type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
+  });
+
+  // Custom Target Glow Color
+  game.settings.register(MODULE_ID, "targetGlowColor", {
+    name: game.i18n.localize("pixie-border.settings.targetGlowColor.name"),
+    hint: game.i18n.localize("pixie-border.settings.targetGlowColor.hint"),
     scope: "world",
     config: true,
     type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
@@ -107,5 +116,6 @@ Hooks.once("init", () => {
     range: { min: 0, max: 10, step: 0.5 }
   });
 });
+
 
 
