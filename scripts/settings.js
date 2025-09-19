@@ -8,10 +8,10 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "hideDefaultBorder", {
     name: game.i18n.localize("pixie-border.settings.hideDefaultBorder.name"),
     hint: game.i18n.localize("pixie-border.settings.hideDefaultBorder.hint"),
-    scope: "world",
+    scope: "client",
     config: true,
     type: Boolean,
-    default: false,
+    default: true,
     requiresReload: true
   });
 
@@ -54,7 +54,7 @@ Hooks.once("init", () => {
     scope: "client",
     config: true,
     type: Number,
-    default: 4,
+    default: 1,
     range: { min: 1, max: 5, step: 1 }
   });
 
@@ -76,7 +76,7 @@ Hooks.once("init", () => {
     scope: "client",
     config: true,
     type: Number,
-    default: 4,
+    default: 3,
     range: { min: 0, max: 10, step: 0.5 }
   });
 
