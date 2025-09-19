@@ -19,7 +19,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "enableTarget", {
     name: game.i18n.localize("pixie-border.settings.enableTarget.name"),
     hint: game.i18n.localize("pixie-border.settings.enableTarget.hint"),
-    scope: "world",
+    scope: "client",
     config: true,
     type: Boolean,
     default: false
@@ -29,7 +29,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "disableOutline", {
     name: game.i18n.localize("pixie-border.settings.disableOutline.name"),
     hint: game.i18n.localize("pixie-border.settings.disableOutline.hint"),
-    scope: "world",
+    scope: "client",
     config: true,
     type: Boolean,
     default: false
@@ -39,7 +39,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "disableGlow", {
     name: game.i18n.localize("pixie-border.settings.disableGlow.name"),
     hint: game.i18n.localize("pixie-border.settings.disableGlow.hint"),
-    scope: "world",
+    scope: "client",
     config: true,
     type: Boolean,
     default: false
@@ -51,7 +51,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "thickness", {
     name: game.i18n.localize("pixie-border.settings.thickness.name"),
     hint: game.i18n.localize("pixie-border.settings.thickness.hint"),
-    scope: "world",
+    scope: "client",
     config: true,
     type: Number,
     default: 4,
@@ -62,7 +62,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "glowDistance", {
     name: game.i18n.localize("pixie-border.settings.glowDistance.name"),
     hint: game.i18n.localize("pixie-border.settings.glowDistance.hint"),
-    scope: "world",
+    scope: "client",
     config: true,
     type: Number,
     default: 10,
@@ -73,7 +73,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "glowOuterStrength", {
     name: game.i18n.localize("pixie-border.settings.glowOuterStrength.name"),
     hint: game.i18n.localize("pixie-border.settings.glowOuterStrength.hint"),
-    scope: "world",
+    scope: "client",
     config: true,
     type: Number,
     default: 4,
@@ -86,7 +86,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "mode", {
     name: game.i18n.localize("pixie-border.settings.mode.name"),
     hint: game.i18n.localize("pixie-border.settings.mode.hint"),
-    scope: "world",
+    scope: "client",
     config: true,
     type: String,
     default: "disposition",
@@ -97,38 +97,38 @@ Hooks.once("init", () => {
     }
   });
 
-  // Outline Color (custom mode)
+  // Outline Color
   game.settings.register(MODULE_ID, "outlineColor", {
     name: game.i18n.localize("pixie-border.settings.outlineColor.name"),
     hint: game.i18n.localize("pixie-border.settings.outlineColor.hint"),
-    scope: "world",
+    scope: "client",
     config: true,
     type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
 
-  // Target Outline Color (custom mode + target)
+  // Target Outline Color
   game.settings.register(MODULE_ID, "targetOutlineColor", {
     name: game.i18n.localize("pixie-border.settings.targetOutlineColor.name"),
     hint: game.i18n.localize("pixie-border.settings.targetOutlineColor.hint"),
-    scope: "world",
+    scope: "client",
     config: true,
     type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
 
-  // Glow Color (custom mode)
+  // Glow Color
   game.settings.register(MODULE_ID, "glowColor", {
     name: game.i18n.localize("pixie-border.settings.glowColor.name"),
     hint: game.i18n.localize("pixie-border.settings.glowColor.hint"),
-    scope: "world",
+    scope: "client",
     config: true,
     type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
 
-  // Target Glow Color (custom mode + target)
+  // Target Glow Color
   game.settings.register(MODULE_ID, "targetGlowColor", {
     name: game.i18n.localize("pixie-border.settings.targetGlowColor.name"),
     hint: game.i18n.localize("pixie-border.settings.targetGlowColor.hint"),
-    scope: "world",
+    scope: "client",
     config: true,
     type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
   });
