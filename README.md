@@ -7,8 +7,9 @@ A module for [Foundry VTT](https://foundryvtt.com/). This module is designed to 
 | Features               |                                                                                                                                                          |
 |------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Disable Foundry Border** | Remove the foundry box border. |
-| **Customizable Colors** | Use disposition colors, or your own preferred color method. |
+| **Customizable Colors** | Color mode allow for the changing of border color and color behaviors. |
 | **Glow Effect** | Add a glow effect to enhance the border styling. |
+| **Target Borders** | Option to add border to targeted tokens. |
 
 **Manifest URL:** `https://github.com//slave2midna/pixie-border/releases/latest/download/module.json`
 
