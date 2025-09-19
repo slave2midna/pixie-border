@@ -36,20 +36,19 @@ function getGlowOuterStrength(){
   return Math.min(10, Math.max(0, s));
 }
 
+// Custom color helper
 function cssToInt(color) {
-  try { if (typeof color === "string" && foundry?.utils?.colorStringToHex) return foundry.utils.colorStringToHex(color); } catch {}
-  if (typeof color === "number" && Number.isFinite(color)) return color >>> 0;
-  if (typeof color !== "string") return 0xffffff;
-  let c = color.trim().toLowerCase();
-  if (c.startsWith("#")) {
-    c = c.slice(1);
+  if (typeof color === "string") {
+    if (foundry?.utils?.colorStringToHex) {
+      try { return foundry.utils.colorStringToHex(color); } catch {}
+    }
+    let c = color.trim();
+    if (c.startsWith("#")) c = c.slice(1);
     if (c.length === 3 || c.length === 4) c = c.split("").map(ch => ch + ch).join("");
     if (c.length === 8) c = c.slice(0, 6);
     const n = parseInt(c, 16);
-    return Number.isFinite(n) ? n : 0xffffff;
+    if (Number.isFinite(n)) return n >>> 0;
   }
-  const m = c.match(/rgba?\s*\(\s*(\d+)[^0-9]+(\d+)[^0-9]+(\d+)/i);
-  if (m) return ((+m[1]&255)<<16) + ((+m[2]&255)<<8) + (+m[3]&255);
   return 0xffffff;
 }
 
@@ -91,7 +90,7 @@ function conditionColorInt(token) {
 // Color mode resolver
 function resolvedColorInt(token) {
   const mode = getMode();
-  if (mode === "custom")     return cssToInt(getCustomColor());
+  if (mode === "custom")     return cssToInt(String(getCustomColor() ?? "#88ccff"));
   if (mode === "condition")  return conditionColorInt(token);
   return dispositionColorInt(token);
 }
@@ -346,3 +345,4 @@ Hooks.once("shutdown", () => {
 
   logOnce("shutdown", "info", `${LOG} shutdown — handlers removed`);
 });
+
