@@ -5,6 +5,10 @@
         "name": "Hide Default Foundry Border",
         "hint": "Remove Foundry’s built-in selection border on tokens."
       },
+      "hideTargetIndicator": {
+        "name": "Hide Target Indicator",
+        "hint": "Remove Foundry’s default targeting indicator."
+      },
       "enableTarget": {
         "name": "Enable Target Border",
         "hint": "Also show the outline and glow on tokens you target."
