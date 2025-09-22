@@ -101,11 +101,15 @@ function conditionColorInt(token) {
 }
 
 function resolvedOutlineColorInt(token) {
+  const isMyTarget = getEnableTarget() && !!token[TARGET_KEY];
+  if (isMyTarget) {
+    const tHex = getTargetOutlineColor?.();
+    if (tHex) return cssToInt(String(tHex));
+  }
   const mode = getMode();
   if (mode === "custom") {
-    const useTarget = getEnableTarget() && !!token[TARGET_KEY];
-    const hex = useTarget ? getTargetOutlineColor() : getOutlineColor();
-    return cssToInt(String(hex ?? "#88ccff"));
+    const hex = getOutlineColor?.() ?? "#88ccff";
+    return cssToInt(String(hex));
   }
   if (mode === "condition") return conditionColorInt(token);
   return dispositionColorInt(token);
@@ -113,13 +117,15 @@ function resolvedOutlineColorInt(token) {
 
 function resolvedGlowColorInt(token) {
   if (getDisableGlow()) return null;
+  const isMyTarget = getEnableTarget() && !!token[TARGET_KEY];
+  if (isMyTarget) {
+    const tg = getTargetGlowColor?.();
+    if (tg) return cssToInt(String(tg));
+  }
   const mode = getMode();
   if (mode === "custom") {
-    const isMyTarget = getEnableTarget() && !!token[TARGET_KEY];
-    const hex = isMyTarget
-      ? (getTargetGlowColor() ?? getGlowColor() ?? getOutlineColor())
-      : (getGlowColor() ?? getOutlineColor());
-    return cssToInt(String(hex ?? "#88ccff"));
+    const base = getGlowColor?.() ?? getOutlineColor?.() ?? "#88ccff";
+    return cssToInt(String(base));
   }
   return resolvedOutlineColorInt(token);
 }
@@ -410,3 +416,4 @@ Hooks.once("shutdown", () => {
 
   logOnce("shutdown", "info", `${LOG} shutdown — handlers removed`);
 });
+
