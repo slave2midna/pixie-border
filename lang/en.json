@@ -46,19 +46,19 @@
       },
       "outlineColor": {
         "name": "Outline Color",
-        "hint": "Used only when Color Mode is Custom and Outline is enabled. Sets the outline color for selected tokens. Default: #88ccff"
+        "hint": "Sets the outline color for selected tokens when Color Mode is set to custom. Default: #88ccff"
       },
       "targetOutlineColor": {
         "name": "Target Outline Color",
-        "hint": "Used when Color mode is Custom and Target Outline is enabled. Sets the outline color for targeted tokens. Default: #88ccff"
+        "hint": "Sets the outline color for targeted tokens when target border is enabled. Default: #88ccff"
       },
       "glowColor": {
         "name": "Glow Color",
-        "hint": "Used when Color mode is Custom and Glow is enabled. Sets the glow color for selected tokens. Default: #88ccff"
+        "hint": "Sets the glow color for selected tokens when Color Mode is set to custom. Default: #88ccff"
       },
       "targetGlowColor": {
         "name": "Target Glow Color",
-        "hint": "Used when Color mode is Custom and Target Glow is enabled. Sets the glow color for targeted tokens. Default: #88ccff"
+        "hint": "Sets the outline color for targeted tokens when target border is enabled. Default: #88ccff"
       }
     }
   }
