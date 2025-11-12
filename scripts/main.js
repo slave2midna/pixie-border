@@ -148,7 +148,6 @@ function resolvedOutlineColorInt(token) {
 }
 
 function resolvedGlowColorInt(token) {
-  if (getDisableGlow()) return null;
   const isMyTarget = getEnableTarget() && !!token[TARGET_KEY];
   if (isMyTarget) {
     const tg = getTargetGlowColor?.();
@@ -309,7 +308,7 @@ function applyNativeTargetVisibility(token) {
  * ================================================================================= */
 
 function refreshToken(token) {
-  if (!token) return;
+  if (!token || token.destroyed) return;
 
   const show =
     token.controlled ||
@@ -349,7 +348,7 @@ Hooks.on("canvasReady", () => {
   if (Handlers._installed) return;
   Handlers._installed = true;
 
-  logOnce("ready", "info", `${LOG} ready — tokens:`, canvas.tokens?.placeables?.length ?? 0);
+  logOnce("ready", "info", "ready — tokens:", canvas.tokens?.placeables?.length ?? 0);
 
   // Hover → show outline/glow (and sync native vis)
   Handlers.hover = Hooks.on("hoverToken", (token, hovered) => {
@@ -443,5 +442,5 @@ Hooks.once("shutdown", () => {
   Object.keys(Handlers).forEach(k => delete Handlers[k]);
   Handlers._installed = false;
 
-  logOnce("shutdown", "info", `${LOG} shutdown — handlers removed`);
+  logOnce("shutdown", "info", "shutdown — handlers removed");
 });
