@@ -141,6 +141,33 @@ Hooks.once("init", () => {
   // Preload template
   loadTemplates?.([TEMPLATE_PATH]);
 
+  // --- Color mode & customization ------------------------------------------------
+
+  game.settings.register(MODULE_ID, "mode", {
+    name: game.i18n.localize("pixie-border.settings.mode.name"),
+    hint: game.i18n.localize("pixie-border.settings.mode.hint"),
+    scope: "world",
+    config: true,
+    type: String,
+    default: "disposition",
+    choices: {
+      disposition: game.i18n.localize("pixie-border.settings.mode.choices.disposition"),
+      custom: game.i18n.localize("pixie-border.settings.mode.choices.custom"),
+      condition: game.i18n.localize("pixie-border.settings.mode.choices.condition")
+    }
+  });
+
+  // Submenu directly after Color Mode
+  game.settings.registerMenu(MODULE_ID, "customizeColors", {
+    name: game.i18n.localize("pixie-border.settings.colorMenu.name"),
+    label: game.i18n.localize("pixie-border.settings.colorMenu.label"),
+    hint: game.i18n.localize("pixie-border.settings.colorMenu.hint"),
+    icon: "fas fa-palette",
+    restricted: false,
+    type: PixieBorderColorConfig
+  });
+
+
   // --- Visibility & toggles -----------------------------------------------------
 
   game.settings.register(MODULE_ID, "hideDefaultBorder", {
@@ -222,33 +249,7 @@ Hooks.once("init", () => {
     range: { min: 0, max: 10, step: 0.5 }
   });
 
-  // --- Color mode & submenu (place Mode directly above the menu) ----------------
-
-  game.settings.register(MODULE_ID, "mode", {
-    name: game.i18n.localize("pixie-border.settings.mode.name"),
-    hint: game.i18n.localize("pixie-border.settings.mode.hint"),
-    scope: "world",
-    config: true,
-    type: String,
-    default: "disposition",
-    choices: {
-      disposition: game.i18n.localize("pixie-border.settings.mode.choices.disposition"),
-      custom: game.i18n.localize("pixie-border.settings.mode.choices.custom"),
-      condition: game.i18n.localize("pixie-border.settings.mode.choices.condition")
-    }
-  });
-
-  // Submenu directly after Color Mode
-  game.settings.registerMenu(MODULE_ID, "customizeColors", {
-    name: game.i18n.localize("pixie-border.settings.colorMenu.name"),
-    label: game.i18n.localize("pixie-border.settings.colorMenu.label"),
-    hint: game.i18n.localize("pixie-border.settings.colorMenu.hint"),
-    icon: "fas fa-palette",
-    restricted: false,
-    type: PixieBorderColorConfig
-  });
-
-  // --- Hidden color fields (managed by the app) ---------------------------------
+  // --- Color fields -----------------------------------------------------------
 
   // Core
   game.settings.register(MODULE_ID, "outlineColor", {
