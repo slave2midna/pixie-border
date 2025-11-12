@@ -51,7 +51,7 @@
         "hint": "Open a color panel to set outline and glow colors for selected and targeted tokens.",
         "saved": "Pixie Border: Colors updated.",
         "reset": "Pixie Border: Colors reset to defaults.",
-        "invalidHex": "Please enter a valid color (e.g., #88ccff or rgb(136,204,255))."
+        "invalidHex": "Please enter a valid hex color (e.g., #88ccff)."
       },
 
       "colorSections": {
@@ -62,19 +62,19 @@
 
       "outlineColor": {
         "name": "Outline Color",
-        "hint": "Sets the outline color for selected tokens when Color Mode is set to custom. Default: #88ccff"
+        "hint": "Sets the outline color for selected tokens when Color Mode is set to custom."
       },
       "targetOutlineColor": {
         "name": "Target Outline Color",
-        "hint": "Sets the outline color for targeted tokens when target border is enabled. Default: #88ccff"
+        "hint": "Sets the outline color for targeted tokens when target border is enabled."
       },
       "glowColor": {
         "name": "Glow Color",
-        "hint": "Sets the glow color for selected tokens when Color Mode is set to custom. Default: #88ccff"
+        "hint": "Sets the glow color for selected tokens when Color Mode is set to custom."
       },
       "targetGlowColor": {
         "name": "Target Glow Color",
-        "hint": "Sets the glow color for targeted tokens when target border is enabled. Default: #88ccff"
+        "hint": "Sets the glow color for targeted tokens when target border is enabled."
       },
 
       "dispositionHostileColor": {
@@ -96,15 +96,15 @@
 
       "conditionHighColor": {
         "name": "High HP Color",
-        "hint": "Used when the token is at high health (e.g., ≥ 66%)."
+        "hint": "Used when the token is at high health."
       },
       "conditionMidColor": {
         "name": "Mid HP Color",
-        "hint": "Used when the token is at moderate health (e.g., 33–66%)."
+        "hint": "Used when the token is at moderate health."
       },
       "conditionLowColor": {
         "name": "Low HP Color",
-        "hint": "Used when the token is at low health (e.g., ≤ 33%)."
+        "hint": "Used when the token is at low health."
       }
     },
 
