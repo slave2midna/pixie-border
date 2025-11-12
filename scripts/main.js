@@ -22,38 +22,19 @@ const logOnce = (k, level, ...msg) => { if (_onceSet.has(k)) return; _onceSet.ad
 function getRenderable(token)  { return token?.mesh ?? token?.icon ?? null; }
 function getMode()             { return game.settings.get(MODULE_ID, "mode"); }
 
-// Toggle for client overrides
-function useClientColors() { return !!game.settings.get(MODULE_ID, "useClientColors"); }
+// Colors (core) — client scoped
+function getOutlineColor()       { return game.settings.get(MODULE_ID, "outlineColor"); }
+function getTargetOutlineColor() { return game.settings.get(MODULE_ID, "targetOutlineColor"); }
+function getGlowColor()          { return game.settings.get(MODULE_ID, "glowColor"); }
+function getTargetGlowColor()    { return game.settings.get(MODULE_ID, "targetGlowColor"); }
 
-// Colors (core) — prefer client overrides when enabled, else world defaults
-function getOutlineColor() {
-  return useClientColors()
-    ? game.settings.get(MODULE_ID, "outlineColor")
-    : game.settings.get(MODULE_ID, "worldOutlineColor");
-}
-function getTargetOutlineColor() {
-  return useClientColors()
-    ? game.settings.get(MODULE_ID, "targetOutlineColor")
-    : game.settings.get(MODULE_ID, "worldTargetOutlineColor");
-}
-function getGlowColor() {
-  return useClientColors()
-    ? game.settings.get(MODULE_ID, "glowColor")
-    : game.settings.get(MODULE_ID, "worldGlowColor");
-}
-function getTargetGlowColor() {
-  return useClientColors()
-    ? game.settings.get(MODULE_ID, "targetGlowColor")
-    : game.settings.get(MODULE_ID, "worldTargetGlowColor");
-}
-
-// Colors (disposition) — world-scoped
+// Colors (disposition) — client scoped
 function getDispHostile()  { return game.settings.get(MODULE_ID, "dispositionHostileColor"); }
 function getDispFriendly() { return game.settings.get(MODULE_ID, "dispositionFriendlyColor"); }
 function getDispNeutral()  { return game.settings.get(MODULE_ID, "dispositionNeutralColor"); }
 function getDispSecret()   { return game.settings.get(MODULE_ID, "dispositionSecretColor"); }
 
-// Colors (condition) — world-scoped
+// Colors (condition) — client scoped
 function getCondHigh() { return game.settings.get(MODULE_ID, "conditionHighColor"); }
 function getCondMid()  { return game.settings.get(MODULE_ID, "conditionMidColor"); }
 function getCondLow()  { return game.settings.get(MODULE_ID, "conditionLowColor"); }
@@ -105,16 +86,15 @@ function cssToInt(color) {
 /** Fallback map if both module settings and CONFIG are unavailable */
 const DISP_MAP = { [-1]:0xe74c3c, [0]:0xf1c40f, [1]:0x2ecc71, [2]:0x3498db, [3]:0x9b59b6 };
 
-/** Resolve color from module disposition settings first, then CONFIG, then fallback */
+/** Resolve disposition color from client settings first, then CONFIG, then fallback */
 function dispositionColorInt(token) {
   const disp = token?.document?.disposition ?? 0;
 
-  // Prefer module settings (world) when available
   let hexStr;
   if (disp === -1) hexStr = String(getDispHostile()  ?? "");
   else if (disp === 0) hexStr = String(getDispNeutral() ?? "");
   else if (disp === 1) hexStr = String(getDispFriendly() ?? "");
-  else if (disp === 3) hexStr = String(getDispSecret()   ?? ""); // "secret"/hidden
+  else if (disp === 3) hexStr = String(getDispSecret()   ?? ""); // hidden/secret
 
   if (hexStr && hexStr !== "undefined") {
     const n = cssToInt(hexStr);
@@ -130,7 +110,7 @@ function dispositionColorInt(token) {
   return DISP_MAP[disp] ?? 0xffffff;
 }
 
-// Condition thresholds (align with UI copy: ≥66, ≥33, else low)
+// Condition thresholds
 const HP_HIGH = 0.66;
 const HP_MID  = 0.33;
 
@@ -164,7 +144,6 @@ function resolvedOutlineColorInt(token) {
     return cssToInt(String(hex));
   }
   if (mode === "condition") return conditionColorInt(token);
-  // default and "disposition"
   return dispositionColorInt(token);
 }
 
@@ -180,7 +159,6 @@ function resolvedGlowColorInt(token) {
     const base = getGlowColor?.() ?? getOutlineColor?.() ?? "#88ccff";
     return cssToInt(String(base));
   }
-  // share same selection as outline for disposition/condition
   return resolvedOutlineColorInt(token);
 }
 
@@ -420,7 +398,7 @@ Hooks.on("canvasReady", () => {
       return;
     }
 
-    // For color mode, client toggle, and any color changes, just refresh
+    // For mode, enableTarget, and any color changes, just refresh
     for (const t of canvas.tokens?.placeables ?? []) {
       if (setting.key === `${MODULE_ID}.enableTarget`) {
         t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
