@@ -43,16 +43,16 @@ class PixieBorderColorConfig extends FormApplication {
     };
   }
 
-  /** Wire up Reset and Cancel buttons */
+  /** Wire up Reset and Cancel buttons + live sync between color/hex inputs */
   activateListeners(html) {
     super.activateListeners(html);
 
+    // --- Reset button ---
     html.find('[data-action="reset"]').on("click", async () => {
-      // Update UI inputs
       for (const [k, v] of Object.entries(COLOR_DEFAULTS)) {
         html.find(`input[name="${k}"]`).val(v);
+        html.find(`input.color-hex[data-mirror="${k}"]`).val(v);
       }
-      // Persist defaults
       await Promise.all(Object.entries(COLOR_DEFAULTS).map(([k, v]) =>
         game.settings.set(MODULE_ID, k, v)
       ));
@@ -60,7 +60,39 @@ class PixieBorderColorConfig extends FormApplication {
       this._refreshTokens();
     });
 
+    // --- Cancel button ---
     html.find('[data-action="cancel"]').on("click", () => this.close());
+
+    // --- Live sync helpers ---
+    const normalizeHex = (v) => {
+      try { return foundry.utils.Color.fromString(v).toString(16, "#"); }
+      catch { return null; }
+    };
+
+    // Color → Hex
+    html.find('input[type="color"]').on("input change", (ev) => {
+      const name = ev.currentTarget.name;
+      const hex = ev.currentTarget.value;
+      html.find(`input.color-hex[data-mirror="${name}"]`).val(hex);
+    });
+
+    // Hex → Color (validate and mirror)
+    html.find('input.color-hex').on("change", (ev) => {
+      const target = ev.currentTarget;
+      const name = target.dataset.mirror;
+      const normalized = normalizeHex(target.value);
+      if (normalized) {
+        target.value = normalized;
+        html.find(`input[name="${name}"]`).val(normalized);
+      } else {
+        // Revert and warn
+        target.value = html.find(`input[name="${name}"]`).val();
+        ui.notifications?.warn(
+          game.i18n.localize("pixie-border.settings.colorMenu.invalidHex") ??
+          "Please enter a valid color (e.g., #88ccff)."
+        );
+      }
+    });
   }
 
   /** Save on submit */
