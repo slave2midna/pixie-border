@@ -1,49 +1,5 @@
 const MODULE_ID = "pixie-border";
-
-/** Inline template for the color application (rendered via data: URL) */
-const COLOR_APP_TEMPLATE = `
-<form class="pixie-border-colors" autocomplete="off">
-  <div class="form-group">
-    <label>{{localize "pixie-border.settings.outlineColor.name"}}</label>
-    <input type="color" name="outlineColor" value="{{outlineColor}}" />
-    <p class="notes">{{localize "pixie-border.settings.outlineColor.hint"}}</p>
-  </div>
-
-  <div class="form-group">
-    <label>{{localize "pixie-border.settings.targetOutlineColor.name"}}</label>
-    <input type="color" name="targetOutlineColor" value="{{targetOutlineColor}}" />
-    <p class="notes">{{localize "pixie-border.settings.targetOutlineColor.hint"}}</p>
-  </div>
-
-  <div class="form-group">
-    <label>{{localize "pixie-border.settings.glowColor.name"}}</label>
-    <input type="color" name="glowColor" value="{{glowColor}}" />
-    <p class="notes">{{localize "pixie-border.settings.glowColor.hint"}}</p>
-  </div>
-
-  <div class="form-group">
-    <label>{{localize "pixie-border.settings.targetGlowColor.name"}}</label>
-    <input type="color" name="targetGlowColor" value="{{targetGlowColor}}" />
-    <p class="notes">{{localize "pixie-border.settings.targetGlowColor.hint"}}</p>
-  </div>
-
-  <footer class="sheet-footer flexrow" style="gap:.5rem;">
-    <button type="submit" class="flex1">
-      <i class="fas fa-check"></i> {{localize "pixie-border.common.save"}}
-    </button>
-    <button type="button" data-action="reset" class="flex1">
-      <i class="fas fa-undo"></i> {{localize "pixie-border.common.reset"}}
-    </button>
-    <button type="button" data-action="cancel">
-      <i class="fas fa-times"></i> {{localize "pixie-border.common.cancel"}}
-    </button>
-  </footer>
-</form>
-`;
-
-/** Create a data: URL for the inline template (so FormApplication can fetch it) */
-const COLOR_APP_TEMPLATE_URL =
-  `data:text/html;charset=utf-8,${encodeURIComponent(COLOR_APP_TEMPLATE)}`;
+const TEMPLATE_PATH = `modules/pixie-border/templates/colorConfig.hbs`;
 
 /** Defaults for reset */
 const COLOR_DEFAULTS = {
@@ -53,7 +9,7 @@ const COLOR_DEFAULTS = {
   targetGlowColor: "#88ccff"
 };
 
-/** Utility to normalize a setting to a hex string (handles Foundry Color objects) */
+/** Normalize to hex string (handles Foundry Color objects or plain strings) */
 function asHexString(v, fallback = "#88ccff") {
   try {
     return foundry.utils.Color.fromString(v ?? fallback).toString(16, "#");
@@ -68,7 +24,7 @@ class PixieBorderColorConfig extends FormApplication {
     return foundry.utils.mergeObject(super.defaultOptions, {
       id: "pixie-border-color-config",
       title: game.i18n.localize("pixie-border.settings.colorMenu.name"),
-      template: COLOR_APP_TEMPLATE_URL,
+      template: TEMPLATE_PATH,
       classes: ["pixie-border", "sheet"],
       width: 420,
       height: "auto",
@@ -78,7 +34,7 @@ class PixieBorderColorConfig extends FormApplication {
   }
 
   /** Provide current values to the template */
-  async getData(options) {
+  async getData() {
     return {
       outlineColor: asHexString(game.settings.get(MODULE_ID, "outlineColor")),
       targetOutlineColor: asHexString(game.settings.get(MODULE_ID, "targetOutlineColor")),
@@ -90,8 +46,9 @@ class PixieBorderColorConfig extends FormApplication {
   /** Wire up Reset and Cancel buttons */
   activateListeners(html) {
     super.activateListeners(html);
+
     html.find('[data-action="reset"]').on("click", async () => {
-      // Set inputs back to defaults visually
+      // Update UI inputs
       for (const [k, v] of Object.entries(COLOR_DEFAULTS)) {
         html.find(`input[name="${k}"]`).val(v);
       }
@@ -101,7 +58,6 @@ class PixieBorderColorConfig extends FormApplication {
       ));
       ui.notifications?.info(game.i18n.localize("pixie-border.settings.colorMenu.reset"));
       this._refreshTokens();
-      // Keep the window open after reset so user can continue tweaking
     });
 
     html.find('[data-action="cancel"]').on("click", () => this.close());
@@ -109,7 +65,6 @@ class PixieBorderColorConfig extends FormApplication {
 
   /** Save on submit */
   async _updateObject(_event, formData) {
-    // formData is a flat object with color strings
     await Promise.all(Object.entries(formData).map(([k, v]) =>
       game.settings.set(MODULE_ID, k, String(v))
     ));
@@ -126,6 +81,8 @@ class PixieBorderColorConfig extends FormApplication {
 }
 
 Hooks.once("init", () => {
+  // Preload template for snappier open (optional but nice)
+  loadTemplates?.([TEMPLATE_PATH]);
 
   // --- Visibility & toggles -----------------------------------------------------
 
@@ -224,14 +181,14 @@ Hooks.once("init", () => {
     }
   });
 
-  // Submenu that opens the Application (v13-safe)
+  // Submenu: open the Application (v13-safe)
   game.settings.registerMenu(MODULE_ID, "customizeColors", {
     name: game.i18n.localize("pixie-border.settings.colorMenu.name"),
     label: game.i18n.localize("pixie-border.settings.colorMenu.label"),
     hint: game.i18n.localize("pixie-border.settings.colorMenu.hint"),
     icon: "fas fa-palette",
     restricted: false,
-    type: PixieBorderColorConfig   // <<< this is the key change
+    type: PixieBorderColorConfig
   });
 
   // Hidden color fields (managed by the app)
