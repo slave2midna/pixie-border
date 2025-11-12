@@ -22,19 +22,38 @@ const logOnce = (k, level, ...msg) => { if (_onceSet.has(k)) return; _onceSet.ad
 function getRenderable(token)  { return token?.mesh ?? token?.icon ?? null; }
 function getMode()             { return game.settings.get(MODULE_ID, "mode"); }
 
-// Colors (core)
-function getOutlineColor()        { return game.settings.get(MODULE_ID, "outlineColor"); }
-function getTargetOutlineColor()  { return game.settings.get(MODULE_ID, "targetOutlineColor"); }
-function getGlowColor()           { return game.settings.get(MODULE_ID, "glowColor"); }
-function getTargetGlowColor()     { return game.settings.get(MODULE_ID, "targetGlowColor"); }
+// Toggle for client overrides
+function useClientColors() { return !!game.settings.get(MODULE_ID, "useClientColors"); }
 
-// Colors (disposition)
+// Colors (core) — prefer client overrides when enabled, else world defaults
+function getOutlineColor() {
+  return useClientColors()
+    ? game.settings.get(MODULE_ID, "outlineColor")
+    : game.settings.get(MODULE_ID, "worldOutlineColor");
+}
+function getTargetOutlineColor() {
+  return useClientColors()
+    ? game.settings.get(MODULE_ID, "targetOutlineColor")
+    : game.settings.get(MODULE_ID, "worldTargetOutlineColor");
+}
+function getGlowColor() {
+  return useClientColors()
+    ? game.settings.get(MODULE_ID, "glowColor")
+    : game.settings.get(MODULE_ID, "worldGlowColor");
+}
+function getTargetGlowColor() {
+  return useClientColors()
+    ? game.settings.get(MODULE_ID, "targetGlowColor")
+    : game.settings.get(MODULE_ID, "worldTargetGlowColor");
+}
+
+// Colors (disposition) — world-scoped
 function getDispHostile()  { return game.settings.get(MODULE_ID, "dispositionHostileColor"); }
 function getDispFriendly() { return game.settings.get(MODULE_ID, "dispositionFriendlyColor"); }
 function getDispNeutral()  { return game.settings.get(MODULE_ID, "dispositionNeutralColor"); }
 function getDispSecret()   { return game.settings.get(MODULE_ID, "dispositionSecretColor"); }
 
-// Colors (condition)
+// Colors (condition) — world-scoped
 function getCondHigh() { return game.settings.get(MODULE_ID, "conditionHighColor"); }
 function getCondMid()  { return game.settings.get(MODULE_ID, "conditionMidColor"); }
 function getCondLow()  { return game.settings.get(MODULE_ID, "conditionLowColor"); }
@@ -90,13 +109,12 @@ const DISP_MAP = { [-1]:0xe74c3c, [0]:0xf1c40f, [1]:0x2ecc71, [2]:0x3498db, [3]:
 function dispositionColorInt(token) {
   const disp = token?.document?.disposition ?? 0;
 
-  // Prefer module settings when mode=disposition (but safe to use anytime)
+  // Prefer module settings (world) when available
   let hexStr;
   if (disp === -1) hexStr = String(getDispHostile()  ?? "");
   else if (disp === 0) hexStr = String(getDispNeutral() ?? "");
   else if (disp === 1) hexStr = String(getDispFriendly() ?? "");
   else if (disp === 3) hexStr = String(getDispSecret()   ?? ""); // "secret"/hidden
-  // Note: disposition 2 (party) isn't customized here; will fall back
 
   if (hexStr && hexStr !== "undefined") {
     const n = cssToInt(hexStr);
@@ -388,13 +406,13 @@ Hooks.on("canvasReady", () => {
     }
   });
 
-  // Settings changes (client-scoped) → update native vis or full refresh
+  // Settings changes → update native vis or full refresh
   Handlers.updateSetting = Hooks.on("updateSetting", (setting) => {
     if (!setting?.key?.startsWith?.(`${MODULE_ID}.`)) return;
 
+    // Native visibility toggles apply immediately
     if (setting.key === `${MODULE_ID}.hideDefaultBorder` ||
         setting.key === `${MODULE_ID}.hideTargetIndicator`) {
-      // Apply the native vis toggles immediately
       for (const t of canvas.tokens?.placeables ?? []) {
         applyNativeBorderVisibility(t);
         applyNativeTargetVisibility(t);
@@ -402,8 +420,8 @@ Hooks.on("canvasReady", () => {
       return;
     }
 
+    // For color mode, client toggle, and any color changes, just refresh
     for (const t of canvas.tokens?.placeables ?? []) {
-      // Recompute TARGET_KEY when enableTarget flips
       if (setting.key === `${MODULE_ID}.enableTarget`) {
         t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
       }
