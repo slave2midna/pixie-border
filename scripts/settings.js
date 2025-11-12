@@ -1,7 +1,7 @@
 const MODULE_ID = "pixie-border";
 const TEMPLATE_PATH = `modules/pixie-border/templates/colorConfig.hbs`;
 
-/** Defaults for reset (safe, adjustable later to match your in-module defaults) */
+/** Defaults for reset **/
 const COLOR_DEFAULTS = {
   // Core outline/glow
   outlineColor: "#88ccff",
@@ -9,13 +9,13 @@ const COLOR_DEFAULTS = {
   glowColor: "#88ccff",
   targetGlowColor: "#88ccff",
 
-  // Disposition colors (outline+glow share one)
+  // Disposition colors
   dispositionHostileColor: "#ff3a3a",
   dispositionFriendlyColor: "#2ecc71",
   dispositionNeutralColor: "#f1c40f",
   dispositionSecretColor: "#9b59b6",
 
-  // Condition colors (high/mid/low HP%)
+  // Condition colors
   conditionHighColor: "#2ecc71",
   conditionMidColor: "#f1c40f",
   conditionLowColor: "#e74c3c"
@@ -47,40 +47,114 @@ class PixieBorderColorConfig extends FormApplication {
 
   /** Provide current values to the template */
   async getData() {
-    const g = (k) => asHexString(game.settings.get(MODULE_ID, k), COLOR_DEFAULTS[k]);
-    return {
-      // Core
+    const g = (k, fb = COLOR_DEFAULTS[k]) => asHexString(game.settings.get(MODULE_ID, k), fb);
+
+    const useClient = !!game.settings.get(MODULE_ID, "useClientColors");
+    const isGM = game.user?.isGM ?? false;
+
+    // World defaults for Custom
+    const worldCore = {
+      outlineColor: g("worldOutlineColor", COLOR_DEFAULTS.outlineColor),
+      targetOutlineColor: g("worldTargetOutlineColor", COLOR_DEFAULTS.targetOutlineColor),
+      glowColor: g("worldGlowColor", COLOR_DEFAULTS.glowColor),
+      targetGlowColor: g("worldTargetGlowColor", COLOR_DEFAULTS.targetGlowColor)
+    };
+
+    // Client overrides for Custom
+    const clientCore = {
       outlineColor: g("outlineColor"),
       targetOutlineColor: g("targetOutlineColor"),
       glowColor: g("glowColor"),
-      targetGlowColor: g("targetGlowColor"),
+      targetGlowColor: g("targetGlowColor")
+    };
 
-      // Disposition
+    // Which set to show in the inputs
+    const core = useClient ? clientCore : worldCore;
+
+    return {
+      // Toggle & perms
+      useClientColors: useClient,
+      canEditWorld: isGM,
+
+      // Core (visual values)
+      outlineColor: core.outlineColor,
+      targetOutlineColor: core.targetOutlineColor,
+      glowColor: core.glowColor,
+      targetGlowColor: core.targetGlowColor,
+
+      // Disposition (world)
       dispositionHostileColor: g("dispositionHostileColor"),
       dispositionFriendlyColor: g("dispositionFriendlyColor"),
       dispositionNeutralColor: g("dispositionNeutralColor"),
       dispositionSecretColor: g("dispositionSecretColor"),
 
-      // Condition (HP%)
+      // Condition (world)
       conditionHighColor: g("conditionHighColor"),
       conditionMidColor: g("conditionMidColor"),
       conditionLowColor: g("conditionLowColor")
     };
   }
 
-  /** Wire up Reset and Cancel buttons + live sync between color/hex inputs */
+  /** Wire up Reset and Cancel buttons + live sync between color/hex inputs + toggle */
   activateListeners(html) {
     super.activateListeners(html);
 
+    // --- Toggle: Use personal colors on this device ---
+    const toggle = html.find('input[type="checkbox"][name="useClientColors"]');
+    const coreInputs = html.find('[data-core-color="1"] input[type="color"], [data-core-color="1"] input.color-hex');
+    const canEditWorld = !!(game.user?.isGM);
+
+    const setCoreEnabled = (enabled) => {
+      // If not using client and not GM, lock core inputs
+      const shouldDisable = !enabled && !canEditWorld;
+      coreInputs.prop("disabled", shouldDisable);
+    };
+    setCoreEnabled(toggle.is(":checked"));
+
+    toggle.on("change", async (ev) => {
+      const useClient = ev.currentTarget.checked;
+      await game.settings.set(MODULE_ID, "useClientColors", !!useClient);
+      setCoreEnabled(useClient);
+    });
+
     // --- Reset button ---
     html.find('[data-action="reset"]').on("click", async () => {
+      const useClient = !!game.settings.get(MODULE_ID, "useClientColors");
+
+      // Reset all fields visually
       for (const [k, v] of Object.entries(COLOR_DEFAULTS)) {
         html.find(`input[name="${k}"]`).val(v);
         html.find(`input.color-hex[data-mirror="${k}"]`).val(v);
       }
-      await Promise.all(Object.entries(COLOR_DEFAULTS).map(([k, v]) =>
-        game.settings.set(MODULE_ID, k, v)
-      ));
+
+      // Persist core to client or world; others always world
+      const ops = [];
+      if (useClient) {
+        ops.push(
+          game.settings.set(MODULE_ID, "outlineColor", COLOR_DEFAULTS.outlineColor),
+          game.settings.set(MODULE_ID, "targetOutlineColor", COLOR_DEFAULTS.targetOutlineColor),
+          game.settings.set(MODULE_ID, "glowColor", COLOR_DEFAULTS.glowColor),
+          game.settings.set(MODULE_ID, "targetGlowColor", COLOR_DEFAULTS.targetGlowColor)
+        );
+      } else {
+        ops.push(
+          game.settings.set(MODULE_ID, "worldOutlineColor", COLOR_DEFAULTS.outlineColor),
+          game.settings.set(MODULE_ID, "worldTargetOutlineColor", COLOR_DEFAULTS.targetOutlineColor),
+          game.settings.set(MODULE_ID, "worldGlowColor", COLOR_DEFAULTS.glowColor),
+          game.settings.set(MODULE_ID, "worldTargetGlowColor", COLOR_DEFAULTS.targetGlowColor)
+        );
+      }
+      ops.push(
+        game.settings.set(MODULE_ID, "dispositionHostileColor", COLOR_DEFAULTS.dispositionHostileColor),
+        game.settings.set(MODULE_ID, "dispositionFriendlyColor", COLOR_DEFAULTS.dispositionFriendlyColor),
+        game.settings.set(MODULE_ID, "dispositionNeutralColor", COLOR_DEFAULTS.dispositionNeutralColor),
+        game.settings.set(MODULE_ID, "dispositionSecretColor", COLOR_DEFAULTS.dispositionSecretColor),
+        game.settings.set(MODULE_ID, "conditionHighColor", COLOR_DEFAULTS.conditionHighColor),
+        game.settings.set(MODULE_ID, "conditionMidColor", COLOR_DEFAULTS.conditionMidColor),
+        game.settings.set(MODULE_ID, "conditionLowColor", COLOR_DEFAULTS.conditionLowColor)
+      );
+
+      await Promise.all(ops);
       ui.notifications?.info(game.i18n.localize("pixie-border.settings.colorMenu.reset"));
       this._refreshTokens();
     });
@@ -122,9 +196,35 @@ class PixieBorderColorConfig extends FormApplication {
 
   /** Save on submit */
   async _updateObject(_event, formData) {
-    await Promise.all(Object.entries(formData).map(([k, v]) =>
-      game.settings.set(MODULE_ID, k, String(v))
-    ));
+    const useClient = !!game.settings.get(MODULE_ID, "useClientColors");
+    const isGM = game.user?.isGM ?? false;
+
+    // Split fields: core custom vs world-only
+    const coreKeys = ["outlineColor", "targetOutlineColor", "glowColor", "targetGlowColor"];
+    const worldOnlyKeys = [
+      "dispositionHostileColor", "dispositionFriendlyColor", "dispositionNeutralColor", "dispositionSecretColor",
+      "conditionHighColor", "conditionMidColor", "conditionLowColor"
+    ];
+
+    const ops = [];
+
+    if (useClient) {
+      // Save core into client overrides
+      for (const k of coreKeys) ops.push(game.settings.set(MODULE_ID, k, String(formData[k])));
+    } else if (isGM) {
+      // Save core into world defaults (GM only)
+      ops.push(
+        game.settings.set(MODULE_ID, "worldOutlineColor", String(formData.outlineColor)),
+        game.settings.set(MODULE_ID, "worldTargetOutlineColor", String(formData.targetOutlineColor)),
+        game.settings.set(MODULE_ID, "worldGlowColor", String(formData.glowColor)),
+        game.settings.set(MODULE_ID, "worldTargetGlowColor", String(formData.targetGlowColor))
+      );
+    }
+
+    // Save world-only always (harmless for non-GMs)
+    for (const k of worldOnlyKeys) ops.push(game.settings.set(MODULE_ID, k, String(formData[k])));
+
+    await Promise.all(ops);
     ui.notifications?.info(game.i18n.localize("pixie-border.settings.colorMenu.saved"));
     this._refreshTokens();
   }
@@ -166,7 +266,6 @@ Hooks.once("init", () => {
     restricted: false,
     type: PixieBorderColorConfig
   });
-
 
   // --- Visibility & toggles -----------------------------------------------------
 
@@ -249,9 +348,45 @@ Hooks.once("init", () => {
     range: { min: 0, max: 10, step: 0.5 }
   });
 
-  // --- Color fields -----------------------------------------------------------
+  // --- Override toggle + world defaults for Custom (hidden; managed by app) -----
 
-  // Core
+  game.settings.register(MODULE_ID, "useClientColors", {
+    name: game.i18n.localize("pixie-border.settings.useClientColors.name"),
+    hint: game.i18n.localize("pixie-border.settings.useClientColors.hint"),
+    scope: "client",
+    config: false,
+    type: Boolean,
+    default: false
+  });
+
+  game.settings.register(MODULE_ID, "worldOutlineColor", {
+    name: "World Outline Color",
+    scope: "world",
+    config: false,
+    type: new foundry.data.fields.ColorField({ initial: COLOR_DEFAULTS.outlineColor })
+  });
+  game.settings.register(MODULE_ID, "worldTargetOutlineColor", {
+    name: "World Target Outline Color",
+    scope: "world",
+    config: false,
+    type: new foundry.data.fields.ColorField({ initial: COLOR_DEFAULTS.targetOutlineColor })
+  });
+  game.settings.register(MODULE_ID, "worldGlowColor", {
+    name: "World Glow Color",
+    scope: "world",
+    config: false,
+    type: new foundry.data.fields.ColorField({ initial: COLOR_DEFAULTS.glowColor })
+  });
+  game.settings.register(MODULE_ID, "worldTargetGlowColor", {
+    name: "World Target Glow Color",
+    scope: "world",
+    config: false,
+    type: new foundry.data.fields.ColorField({ initial: COLOR_DEFAULTS.targetGlowColor })
+  });
+
+  // --- Color fields (client-managed core; world-only disposition/condition) -----
+
+  // Core (client overrides; hidden)
   game.settings.register(MODULE_ID, "outlineColor", {
     name: game.i18n.localize("pixie-border.settings.outlineColor.name"),
     hint: game.i18n.localize("pixie-border.settings.outlineColor.hint"),
@@ -284,7 +419,7 @@ Hooks.once("init", () => {
     type: new foundry.data.fields.ColorField({ initial: COLOR_DEFAULTS.targetGlowColor })
   });
 
-  // Disposition
+  // Disposition (world; hidden)
   game.settings.register(MODULE_ID, "dispositionHostileColor", {
     name: game.i18n.localize("pixie-border.settings.dispositionHostileColor.name"),
     hint: game.i18n.localize("pixie-border.settings.dispositionHostileColor.hint"),
@@ -317,7 +452,7 @@ Hooks.once("init", () => {
     type: new foundry.data.fields.ColorField({ initial: COLOR_DEFAULTS.dispositionSecretColor })
   });
 
-  // Condition (HP%)
+  // Condition (HP%) (world; hidden)
   game.settings.register(MODULE_ID, "conditionHighColor", {
     name: game.i18n.localize("pixie-border.settings.conditionHighColor.name"),
     hint: game.i18n.localize("pixie-border.settings.conditionHighColor.hint"),
