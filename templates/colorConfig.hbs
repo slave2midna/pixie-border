@@ -1,10 +1,25 @@
 <form class="pixie-border-colors flexcol" autocomplete="off">
   <section class="form-body">
 
+    <!-- === Personal Override Toggle === -->
+    <div class="form-group">
+      <label>{{localize "pixie-border.settings.useClientColors.name"}}</label>
+      <div class="form-fields">
+        <input type="checkbox" name="useClientColors" {{checked useClientColors}} />
+      </div>
+      <p class="notes">
+        {{#if canEditWorld}}
+          {{localize "pixie-border.settings.useClientColors.hintGM"}}
+        {{else}}
+          {{localize "pixie-border.settings.useClientColors.hint"}}
+        {{/if}}
+      </p>
+    </div>
+
     <!-- === Core Custom Colors (used by Mode: Custom) === -->
     <h3>{{localize "pixie-border.settings.colorSections.core"}}</h3>
 
-    <div class="form-group">
+    <div class="form-group" data-core-color="1">
       <label>{{localize "pixie-border.settings.outlineColor.name"}}</label>
       <div class="form-fields">
         <input type="color" name="outlineColor" value="{{outlineColor}}" />
@@ -13,7 +28,7 @@
       <p class="notes">{{localize "pixie-border.settings.outlineColor.hint"}}</p>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" data-core-color="1">
       <label>{{localize "pixie-border.settings.targetOutlineColor.name"}}</label>
       <div class="form-fields">
         <input type="color" name="targetOutlineColor" value="{{targetOutlineColor}}" />
@@ -22,7 +37,7 @@
       <p class="notes">{{localize "pixie-border.settings.targetOutlineColor.hint"}}</p>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" data-core-color="1">
       <label>{{localize "pixie-border.settings.glowColor.name"}}</label>
       <div class="form-fields">
         <input type="color" name="glowColor" value="{{glowColor}}" />
@@ -31,7 +46,7 @@
       <p class="notes">{{localize "pixie-border.settings.glowColor.hint"}}</p>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" data-core-color="1">
       <label>{{localize "pixie-border.settings.targetGlowColor.name"}}</label>
       <div class="form-fields">
         <input type="color" name="targetGlowColor" value="{{targetGlowColor}}" />
