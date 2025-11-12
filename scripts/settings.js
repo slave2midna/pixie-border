@@ -25,8 +25,18 @@ const COLOR_DEFAULTS = {
 // Normalize color objects to hex string
 function asHexString(v, fallback = "#88ccff") {
   try {
+    // If already a Foundry Color, just stringify
+    if (v instanceof foundry.utils.Color) {
+      return v.toString(16, "#");
+    }
+
+    // Otherwise parse whatever we got
     return foundry.utils.Color.fromString(v ?? fallback).toString(16, "#");
   } catch {
+    // If it's already a plausible hex string, trust it; else fallback
+    if (typeof v === "string" && /^#?[0-9a-f]{3,8}$/i.test(v)) {
+      return v.startsWith("#") ? v : `#${v}`;
+    }
     return fallback;
   }
 }
@@ -78,15 +88,23 @@ class PixieBorderColorConfig extends FormApplication {
         html.find(`input[name="${k}"]`).val(v);
         html.find(`input.color-hex[data-mirror="${k}"]`).val(v);
       }
-      await Promise.all(ALL_COLOR_KEYS.map(k => game.settings.set(MODULE_ID, k, COLOR_DEFAULTS[k])));
+      await Promise.all(
+        ALL_COLOR_KEYS.map(k => game.settings.set(MODULE_ID, k, COLOR_DEFAULTS[k]))
+      );
       ui.notifications?.info(game.i18n.localize("pixie-border.settings.colorMenu.reset"));
     });
 
     html.find('[data-action="cancel"]').on("click", () => this.close());
 
     const normalizeHex = (v) => {
-      try { return foundry.utils.Color.fromString(v).toString(16, "#"); }
-      catch { return null; }
+      try {
+        if (v instanceof foundry.utils.Color) {
+          return v.toString(16, "#");
+        }
+        return foundry.utils.Color.fromString(v).toString(16, "#");
+      } catch {
+        return null;
+      }
     };
 
     // Color → Hex
@@ -115,9 +133,11 @@ class PixieBorderColorConfig extends FormApplication {
 
   // Save on submit
   async _updateObject(_event, formData) {
-    await Promise.all(Object.entries(formData).map(([k, v]) =>
-      game.settings.set(MODULE_ID, k, String(v))
-    ));
+    await Promise.all(
+      Object.entries(formData).map(([k, v]) =>
+        game.settings.set(MODULE_ID, k, String(v))
+      )
+    );
     ui.notifications?.info(game.i18n.localize("pixie-border.settings.colorMenu.saved"));
   }
 }
@@ -126,7 +146,6 @@ Hooks.once("init", () => {
   loadTemplates?.([TEMPLATE_PATH]);
 
   // --- Color mode ---------------------------------------------------
-  
   game.settings.register(MODULE_ID, "mode", {
     name: game.i18n.localize("pixie-border.settings.mode.name"),
     hint: game.i18n.localize("pixie-border.settings.mode.hint"),
@@ -151,7 +170,6 @@ Hooks.once("init", () => {
   });
 
   // --- Visibility & toggles --------------------------------------------
-  
   game.settings.register(MODULE_ID, "hideDefaultBorder", {
     name: game.i18n.localize("pixie-border.settings.hideDefaultBorder.name"),
     hint: game.i18n.localize("pixie-border.settings.hideDefaultBorder.hint"),
@@ -200,7 +218,6 @@ Hooks.once("init", () => {
   });
 
   // --- Numeric controls ----------------------------------------------
-  
   game.settings.register(MODULE_ID, "thickness", {
     name: game.i18n.localize("pixie-border.settings.thickness.name"),
     hint: game.i18n.localize("pixie-border.settings.thickness.hint"),
@@ -232,7 +249,6 @@ Hooks.once("init", () => {
   });
 
   // --- Color fields ----------------------------------------
-  
   const colorField = foundry.data.fields.ColorField;
 
   for (const k of CORE_KEYS) {
