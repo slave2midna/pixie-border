@@ -6,7 +6,7 @@
         "hint": "Remove Foundry’s built-in selection border on tokens."
       },
       "hideTargetIndicator": {
-        "name": "Hide Target Indicator",
+        "name": "Hide Foundry Target Indicator",
         "hint": "Remove Foundry’s default targeting indicator."
       },
       "enableTarget": {
@@ -44,6 +44,15 @@
           "condition": "Condition colors"
         }
       },
+
+      "colorMenu": {
+        "name": "Customize Colors",
+        "label": "Customize Colors",
+        "hint": "Open a color panel to set outline and glow colors for selected and targeted tokens.",
+        "saved": "Pixie Border: Colors updated.",
+        "reset": "Pixie Border: Colors reset to defaults."
+      },
+
       "outlineColor": {
         "name": "Outline Color",
         "hint": "Sets the outline color for selected tokens when Color Mode is set to custom. Default: #88ccff"
@@ -60,6 +69,12 @@
         "name": "Target Glow Color",
         "hint": "Sets the outline color for targeted tokens when target border is enabled. Default: #88ccff"
       }
+    },
+
+    "common": {
+      "save": "Save",
+      "reset": "Reset to Defaults",
+      "cancel": "Cancel"
     }
   }
 }
