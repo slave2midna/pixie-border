@@ -1,15 +1,28 @@
 const MODULE_ID = "pixie-border";
 const TEMPLATE_PATH = `modules/pixie-border/templates/colorConfig.hbs`;
 
-/** Defaults for reset */
+// Key groups
+const CORE_KEYS = ["outlineColor","targetOutlineColor","glowColor","targetGlowColor"];
+const DISP_KEYS = ["dispositionHostileColor","dispositionFriendlyColor","dispositionNeutralColor","dispositionSecretColor"];
+const COND_KEYS = ["conditionHighColor","conditionMidColor","conditionLowColor"];
+const ALL_COLOR_KEYS = [...CORE_KEYS, ...DISP_KEYS, ...COND_KEYS];
+
+// Color defaults
 const COLOR_DEFAULTS = {
   outlineColor: "#88ccff",
   targetOutlineColor: "#88ccff",
   glowColor: "#88ccff",
-  targetGlowColor: "#88ccff"
+  targetGlowColor: "#88ccff",
+  dispositionHostileColor: "#ff3a3a",
+  dispositionFriendlyColor: "#2ecc71",
+  dispositionNeutralColor: "#f1c40f",
+  dispositionSecretColor: "#9b59b6",
+  conditionHighColor: "#2ecc71",
+  conditionMidColor: "#f1c40f",
+  conditionLowColor: "#e74c3c"
 };
 
-/** Normalize to hex string (handles Foundry Color objects or plain strings) */
+// Normalize color objects to hex string
 function asHexString(v, fallback = "#88ccff") {
   try {
     return foundry.utils.Color.fromString(v ?? fallback).toString(16, "#");
@@ -18,7 +31,7 @@ function asHexString(v, fallback = "#88ccff") {
   }
 }
 
-/** Color configuration form application */
+// Color configuration form application
 class PixieBorderColorConfig extends FormApplication {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
@@ -26,66 +39,119 @@ class PixieBorderColorConfig extends FormApplication {
       title: game.i18n.localize("pixie-border.settings.colorMenu.name"),
       template: TEMPLATE_PATH,
       classes: ["pixie-border", "sheet"],
-      width: 420,
+      width: 520,
       height: "auto",
       submitOnChange: false,
       closeOnSubmit: true
     });
   }
 
-  /** Provide current values to the template */
+  // Provide client values to the template
   async getData() {
+    const g = (k) => asHexString(game.settings.get(MODULE_ID, k), COLOR_DEFAULTS[k]);
     return {
-      outlineColor: asHexString(game.settings.get(MODULE_ID, "outlineColor")),
-      targetOutlineColor: asHexString(game.settings.get(MODULE_ID, "targetOutlineColor")),
-      glowColor: asHexString(game.settings.get(MODULE_ID, "glowColor")),
-      targetGlowColor: asHexString(game.settings.get(MODULE_ID, "targetGlowColor"))
+      // Core (client)
+      outlineColor: g("outlineColor"),
+      targetOutlineColor: g("targetOutlineColor"),
+      glowColor: g("glowColor"),
+      targetGlowColor: g("targetGlowColor"),
+      // Disposition (client)
+      dispositionHostileColor: g("dispositionHostileColor"),
+      dispositionFriendlyColor: g("dispositionFriendlyColor"),
+      dispositionNeutralColor: g("dispositionNeutralColor"),
+      dispositionSecretColor: g("dispositionSecretColor"),
+      // Condition (client)
+      conditionHighColor: g("conditionHighColor"),
+      conditionMidColor: g("conditionMidColor"),
+      conditionLowColor: g("conditionLowColor")
     };
   }
 
-  /** Wire up Reset and Cancel buttons */
+  /** Wire up Reset and Cancel + live sync between color/hex inputs */
   activateListeners(html) {
     super.activateListeners(html);
 
+    // Reset to defaults
     html.find('[data-action="reset"]').on("click", async () => {
-      // Update UI inputs
-      for (const [k, v] of Object.entries(COLOR_DEFAULTS)) {
+      for (const k of ALL_COLOR_KEYS) {
+        const v = COLOR_DEFAULTS[k];
         html.find(`input[name="${k}"]`).val(v);
+        html.find(`input.color-hex[data-mirror="${k}"]`).val(v);
       }
-      // Persist defaults
-      await Promise.all(Object.entries(COLOR_DEFAULTS).map(([k, v]) =>
-        game.settings.set(MODULE_ID, k, v)
-      ));
+      await Promise.all(ALL_COLOR_KEYS.map(k => game.settings.set(MODULE_ID, k, COLOR_DEFAULTS[k])));
       ui.notifications?.info(game.i18n.localize("pixie-border.settings.colorMenu.reset"));
-      this._refreshTokens();
     });
 
     html.find('[data-action="cancel"]').on("click", () => this.close());
+
+    const normalizeHex = (v) => {
+      try { return foundry.utils.Color.fromString(v).toString(16, "#"); }
+      catch { return null; }
+    };
+
+    // Color → Hex
+    html.find('input[type="color"]').on("input change", (ev) => {
+      const name = ev.currentTarget.name;
+      html.find(`input.color-hex[data-mirror="${name}"]`).val(ev.currentTarget.value);
+    });
+
+    // Hex → Color
+    html.find('input.color-hex').on("change", (ev) => {
+      const target = ev.currentTarget;
+      const name = target.dataset.mirror;
+      const normalized = normalizeHex(target.value);
+      if (normalized) {
+        target.value = normalized;
+        html.find(`input[name="${name}"]`).val(normalized);
+      } else {
+        target.value = html.find(`input[name="${name}"]`).val();
+        ui.notifications?.warn(
+          game.i18n.localize("pixie-border.settings.colorMenu.invalidHex") ??
+          "Please enter a valid color (e.g., #88ccff)."
+        );
+      }
+    });
   }
 
-  /** Save on submit */
+  // Save on submit
   async _updateObject(_event, formData) {
     await Promise.all(Object.entries(formData).map(([k, v]) =>
       game.settings.set(MODULE_ID, k, String(v))
     ));
     ui.notifications?.info(game.i18n.localize("pixie-border.settings.colorMenu.saved"));
-    this._refreshTokens();
-  }
-
-  /** Light refresh for immediate visual feedback */
-  _refreshTokens() {
-    for (const t of canvas.tokens?.placeables ?? []) {
-      Hooks.callAll("updateSetting", { key: `${MODULE_ID}.outlineColor` });
-    }
   }
 }
 
 Hooks.once("init", () => {
-  // Preload template for snappier open (optional but nice)
   loadTemplates?.([TEMPLATE_PATH]);
 
-  // --- Visibility & toggles -----------------------------------------------------
+  // --- Color mode ---------------------------------------------------
+  
+  game.settings.register(MODULE_ID, "mode", {
+    name: game.i18n.localize("pixie-border.settings.mode.name"),
+    hint: game.i18n.localize("pixie-border.settings.mode.hint"),
+    scope: "client",
+    config: true,
+    type: String,
+    default: "disposition",
+    choices: {
+      disposition: game.i18n.localize("pixie-border.settings.mode.choices.disposition"),
+      custom: game.i18n.localize("pixie-border.settings.mode.choices.custom"),
+      condition: game.i18n.localize("pixie-border.settings.mode.choices.condition")
+    }
+  });
 
+  game.settings.registerMenu(MODULE_ID, "customizeColors", {
+    name: game.i18n.localize("pixie-border.settings.colorMenu.name"),
+    label: game.i18n.localize("pixie-border.settings.colorMenu.label"),
+    hint: game.i18n.localize("pixie-border.settings.colorMenu.hint"),
+    icon: "fas fa-palette",
+    restricted: false,
+    type: PixieBorderColorConfig
+  });
+
+  // --- Visibility & toggles --------------------------------------------
+  
   game.settings.register(MODULE_ID, "hideDefaultBorder", {
     name: game.i18n.localize("pixie-border.settings.hideDefaultBorder.name"),
     hint: game.i18n.localize("pixie-border.settings.hideDefaultBorder.hint"),
@@ -133,8 +199,8 @@ Hooks.once("init", () => {
     default: false
   });
 
-  // --- Numeric controls ---------------------------------------------------------
-
+  // --- Numeric controls ----------------------------------------------
+  
   game.settings.register(MODULE_ID, "thickness", {
     name: game.i18n.localize("pixie-border.settings.thickness.name"),
     hint: game.i18n.localize("pixie-border.settings.thickness.hint"),
@@ -165,62 +231,37 @@ Hooks.once("init", () => {
     range: { min: 0, max: 10, step: 0.5 }
   });
 
-  // --- Color mode & colors ------------------------------------------------------
+  // --- Color fields ----------------------------------------
+  
+  const colorField = foundry.data.fields.ColorField;
 
-  game.settings.register(MODULE_ID, "mode", {
-    name: game.i18n.localize("pixie-border.settings.mode.name"),
-    hint: game.i18n.localize("pixie-border.settings.mode.hint"),
-    scope: "world",
-    config: true,
-    type: String,
-    default: "disposition",
-    choices: {
-      disposition: game.i18n.localize("pixie-border.settings.mode.choices.disposition"),
-      custom: game.i18n.localize("pixie-border.settings.mode.choices.custom"),
-      condition: game.i18n.localize("pixie-border.settings.mode.choices.condition")
-    }
-  });
+  for (const k of CORE_KEYS) {
+    game.settings.register(MODULE_ID, k, {
+      name: game.i18n.localize(`pixie-border.settings.${k}.name`),
+      hint: game.i18n.localize(`pixie-border.settings.${k}.hint`),
+      scope: "client",
+      config: false,
+      type: new colorField({ initial: COLOR_DEFAULTS[k] })
+    });
+  }
 
-  // Submenu: open the Application (v13-safe)
-  game.settings.registerMenu(MODULE_ID, "customizeColors", {
-    name: game.i18n.localize("pixie-border.settings.colorMenu.name"),
-    label: game.i18n.localize("pixie-border.settings.colorMenu.label"),
-    hint: game.i18n.localize("pixie-border.settings.colorMenu.hint"),
-    icon: "fas fa-palette",
-    restricted: false,
-    type: PixieBorderColorConfig
-  });
+  for (const k of DISP_KEYS) {
+    game.settings.register(MODULE_ID, k, {
+      name: game.i18n.localize(`pixie-border.settings.${k}.name`),
+      hint: game.i18n.localize(`pixie-border.settings.${k}.hint`),
+      scope: "client",
+      config: false,
+      type: new colorField({ initial: COLOR_DEFAULTS[k] })
+    });
+  }
 
-  // Hidden color fields (managed by the app)
-  game.settings.register(MODULE_ID, "outlineColor", {
-    name: game.i18n.localize("pixie-border.settings.outlineColor.name"),
-    hint: game.i18n.localize("pixie-border.settings.outlineColor.hint"),
-    scope: "client",
-    config: false,
-    type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
-  });
-
-  game.settings.register(MODULE_ID, "targetOutlineColor", {
-    name: game.i18n.localize("pixie-border.settings.targetOutlineColor.name"),
-    hint: game.i18n.localize("pixie-border.settings.targetOutlineColor.hint"),
-    scope: "client",
-    config: false,
-    type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
-  });
-
-  game.settings.register(MODULE_ID, "glowColor", {
-    name: game.i18n.localize("pixie-border.settings.glowColor.name"),
-    hint: game.i18n.localize("pixie-border.settings.glowColor.hint"),
-    scope: "client",
-    config: false,
-    type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
-  });
-
-  game.settings.register(MODULE_ID, "targetGlowColor", {
-    name: game.i18n.localize("pixie-border.settings.targetGlowColor.name"),
-    hint: game.i18n.localize("pixie-border.settings.targetGlowColor.hint"),
-    scope: "client",
-    config: false,
-    type: new foundry.data.fields.ColorField({ initial: "#88ccff" })
-  });
+  for (const k of COND_KEYS) {
+    game.settings.register(MODULE_ID, k, {
+      name: game.i18n.localize(`pixie-border.settings.${k}.name`),
+      hint: game.i18n.localize(`pixie-border.settings.${k}.hint`),
+      scope: "client",
+      config: false,
+      type: new colorField({ initial: COLOR_DEFAULTS[k] })
+    });
+  }
 });

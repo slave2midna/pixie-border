@@ -1,0 +1,125 @@
+<form class="pixie-border-colors flexcol" autocomplete="off">
+  <section class="form-body">
+
+    <!-- Core Custom Colors (Mode: Custom) -->
+    <h3>{{localize "pixie-border.settings.colorSections.core"}}</h3>
+
+    <div class="form-group">
+      <label>{{localize "pixie-border.settings.outlineColor.name"}}</label>
+      <div class="form-fields">
+        <input type="color" name="outlineColor" value="{{outlineColor}}" />
+        <input type="text" class="color-hex" data-mirror="outlineColor" value="{{outlineColor}}" spellcheck="false" />
+      </div>
+      <p class="notes">{{localize "pixie-border.settings.outlineColor.hint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "pixie-border.settings.targetOutlineColor.name"}}</label>
+      <div class="form-fields">
+        <input type="color" name="targetOutlineColor" value="{{targetOutlineColor}}" />
+        <input type="text" class="color-hex" data-mirror="targetOutlineColor" value="{{targetOutlineColor}}" spellcheck="false" />
+      </div>
+      <p class="notes">{{localize "pixie-border.settings.targetOutlineColor.hint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "pixie-border.settings.glowColor.name"}}</label>
+      <div class="form-fields">
+        <input type="color" name="glowColor" value="{{glowColor}}" />
+        <input type="text" class="color-hex" data-mirror="glowColor" value="{{glowColor}}" spellcheck="false" />
+      </div>
+      <p class="notes">{{localize "pixie-border.settings.glowColor.hint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "pixie-border.settings.targetGlowColor.name"}}</label>
+      <div class="form-fields">
+        <input type="color" name="targetGlowColor" value="{{targetGlowColor}}" />
+        <input type="text" class="color-hex" data-mirror="targetGlowColor" value="{{targetGlowColor}}" spellcheck="false" />
+      </div>
+      <p class="notes">{{localize "pixie-border.settings.targetGlowColor.hint"}}</p>
+    </div>
+
+    <!-- Disposition Colors (Mode: Disposition) -->
+    <h3>{{localize "pixie-border.settings.colorSections.disposition"}}</h3>
+
+    <div class="form-group">
+      <label>{{localize "pixie-border.settings.dispositionHostileColor.name"}}</label>
+      <div class="form-fields">
+        <input type="color" name="dispositionHostileColor" value="{{dispositionHostileColor}}" />
+        <input type="text" class="color-hex" data-mirror="dispositionHostileColor" value="{{dispositionHostileColor}}" spellcheck="false" />
+      </div>
+      <p class="notes">{{localize "pixie-border.settings.dispositionHostileColor.hint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "pixie-border.settings.dispositionFriendlyColor.name"}}</label>
+      <div class="form-fields">
+        <input type="color" name="dispositionFriendlyColor" value="{{dispositionFriendlyColor}}" />
+        <input type="text" class="color-hex" data-mirror="dispositionFriendlyColor" value="{{dispositionFriendlyColor}}" spellcheck="false" />
+      </div>
+      <p class="notes">{{localize "pixie-border.settings.dispositionFriendlyColor.hint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "pixie-border.settings.dispositionNeutralColor.name"}}</label>
+      <div class="form-fields">
+        <input type="color" name="dispositionNeutralColor" value="{{dispositionNeutralColor}}" />
+        <input type="text" class="color-hex" data-mirror="dispositionNeutralColor" value="{{dispositionNeutralColor}}" spellcheck="false" />
+      </div>
+      <p class="notes">{{localize "pixie-border.settings.dispositionNeutralColor.hint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "pixie-border.settings.dispositionSecretColor.name"}}</label>
+      <div class="form-fields">
+        <input type="color" name="dispositionSecretColor" value="{{dispositionSecretColor}}" />
+        <input type="text" class="color-hex" data-mirror="dispositionSecretColor" value="{{dispositionSecretColor}}" spellcheck="false" />
+      </div>
+      <p class="notes">{{localize "pixie-border.settings.dispositionSecretColor.hint"}}</p>
+    </div>
+
+    <!-- Condition Colors (Mode: Condition) -->
+    <h3>{{localize "pixie-border.settings.colorSections.condition"}}</h3>
+
+    <div class="form-group">
+      <label>{{localize "pixie-border.settings.conditionHighColor.name"}}</label>
+      <div class="form-fields">
+        <input type="color" name="conditionHighColor" value="{{conditionHighColor}}" />
+        <input type="text" class="color-hex" data-mirror="conditionHighColor" value="{{conditionHighColor}}" spellcheck="false" />
+      </div>
+      <p class="notes">{{localize "pixie-border.settings.conditionHighColor.hint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "pixie-border.settings.conditionMidColor.name"}}</label>
+      <div class="form-fields">
+        <input type="color" name="conditionMidColor" value="{{conditionMidColor}}" />
+        <input type="text" class="color-hex" data-mirror="conditionMidColor" value="{{conditionMidColor}}" spellcheck="false" />
+      </div>
+      <p class="notes">{{localize "pixie-border.settings.conditionMidColor.hint"}}</p>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "pixie-border.settings.conditionLowColor.name"}}</label>
+      <div class="form-fields">
+        <input type="color" name="conditionLowColor" value="{{conditionLowColor}}" />
+        <input type="text" class="color-hex" data-mirror="conditionLowColor" value="{{conditionLowColor}}" spellcheck="false" />
+      </div>
+      <p class="notes">{{localize "pixie-border.settings.conditionLowColor.hint"}}</p>
+    </div>
+
+  </section>
+
+  <footer class="dialog-buttons" style="gap:.5rem;">
+    <button type="submit" class="flex1">
+      <i class="fas fa-check"></i> {{localize "pixie-border.common.save"}}
+    </button>
+    <button type="button" data-action="reset" class="flex1">
+      <i class="fas fa-undo"></i> {{localize "pixie-border.common.reset"}}
+    </button>
+    <button type="button" data-action="cancel">
+      <i class="fas fa-times"></i> {{localize "pixie-border.common.cancel"}}
+    </button>
+  </footer>
+</form>

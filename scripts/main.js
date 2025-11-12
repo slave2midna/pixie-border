@@ -22,11 +22,22 @@ const logOnce = (k, level, ...msg) => { if (_onceSet.has(k)) return; _onceSet.ad
 function getRenderable(token)  { return token?.mesh ?? token?.icon ?? null; }
 function getMode()             { return game.settings.get(MODULE_ID, "mode"); }
 
-// Colors
-function getOutlineColor()        { return game.settings.get(MODULE_ID, "outlineColor"); }
-function getTargetOutlineColor()  { return game.settings.get(MODULE_ID, "targetOutlineColor"); }
-function getGlowColor()           { return game.settings.get(MODULE_ID, "glowColor"); }
-function getTargetGlowColor()     { return game.settings.get(MODULE_ID, "targetGlowColor"); }
+// Colors (core) — client scoped
+function getOutlineColor()       { return game.settings.get(MODULE_ID, "outlineColor"); }
+function getTargetOutlineColor() { return game.settings.get(MODULE_ID, "targetOutlineColor"); }
+function getGlowColor()          { return game.settings.get(MODULE_ID, "glowColor"); }
+function getTargetGlowColor()    { return game.settings.get(MODULE_ID, "targetGlowColor"); }
+
+// Colors (disposition) — client scoped
+function getDispHostile()  { return game.settings.get(MODULE_ID, "dispositionHostileColor"); }
+function getDispFriendly() { return game.settings.get(MODULE_ID, "dispositionFriendlyColor"); }
+function getDispNeutral()  { return game.settings.get(MODULE_ID, "dispositionNeutralColor"); }
+function getDispSecret()   { return game.settings.get(MODULE_ID, "dispositionSecretColor"); }
+
+// Colors (condition) — client scoped
+function getCondHigh() { return game.settings.get(MODULE_ID, "conditionHighColor"); }
+function getCondMid()  { return game.settings.get(MODULE_ID, "conditionMidColor"); }
+function getCondLow()  { return game.settings.get(MODULE_ID, "conditionLowColor"); }
 
 // Toggles
 function getDisableOutline()   { return !!game.settings.get(MODULE_ID, "disableOutline"); }
@@ -52,7 +63,7 @@ function getGlowOuterStrength() {
   return Math.min(10, Math.max(0, s));
 }
 
-// Convert #rrggbb to integer
+// Convert CSS color to integer
 function cssToInt(color) {
   if (typeof color === "string") {
     if (foundry?.utils?.colorStringToHex) {
@@ -72,17 +83,37 @@ function cssToInt(color) {
  * Color resolvers
  * ================================================================================= */
 
+/** Fallback map if both module settings and CONFIG are unavailable */
 const DISP_MAP = { [-1]:0xe74c3c, [0]:0xf1c40f, [1]:0x2ecc71, [2]:0x3498db, [3]:0x9b59b6 };
+
+/** Resolve disposition color from client settings first, then CONFIG, then fallback */
 function dispositionColorInt(token) {
   const disp = token?.document?.disposition ?? 0;
+
+  let hexStr;
+  if (disp === -1) hexStr = String(getDispHostile()  ?? "");
+  else if (disp === 0) hexStr = String(getDispNeutral() ?? "");
+  else if (disp === 1) hexStr = String(getDispFriendly() ?? "");
+  else if (disp === 3) hexStr = String(getDispSecret()   ?? ""); // hidden/secret
+
+  if (hexStr && hexStr !== "undefined") {
+    const n = cssToInt(hexStr);
+    if (n !== 0xffffff || /^#?ffffff$/i.test(hexStr) || /^#?fff$/i.test(hexStr)) return n;
+  }
+
+  // Next, Foundry’s configured disposition colors (if present)
   const cfg = CONFIG.Canvas?.dispositionColors ?? CONFIG.Token?.DISPOSITION_COLORS ?? null;
   const raw = cfg?.[disp] ?? cfg?.[String(disp)];
-  return raw != null ? cssToInt(raw) : (DISP_MAP[disp] ?? 0xffffff);
+  if (raw != null) return cssToInt(String(raw));
+
+  // Fallback to built-in map
+  return DISP_MAP[disp] ?? 0xffffff;
 }
 
-const HEALTH_GREEN  = 0x2ecc71; // ≥ 50%
-const HEALTH_YELLOW = 0xf1c40f; // ≥ 25%
-const HEALTH_RED    = 0xe74c3c; // < 25%
+// Condition thresholds
+const HP_HIGH = 0.66;
+const HP_MID  = 0.33;
+
 function getHpPercent(token) {
   const doc = token?.document;
   if (!doc || typeof doc.getBarAttribute !== "function") return null;
@@ -92,12 +123,13 @@ function getHpPercent(token) {
   if (!Number.isFinite(v) || !Number.isFinite(m) || m <= 0) return null;
   return Math.max(0, Math.min(1, v / m));
 }
+
 function conditionColorInt(token) {
   const pct = getHpPercent(token);
-  if (pct == null) return dispositionColorInt(token);
-  if (pct >= 0.50) return HEALTH_GREEN;
-  if (pct >= 0.25) return HEALTH_YELLOW;
-  return HEALTH_RED;
+  if (pct == null) return dispositionColorInt(token); // graceful fallback
+  if (pct >= HP_HIGH) return cssToInt(String(getCondHigh() ?? "#2ecc71"));
+  if (pct >= HP_MID)  return cssToInt(String(getCondMid()  ?? "#f1c40f"));
+  return cssToInt(String(getCondLow() ?? "#e74c3c"));
 }
 
 function resolvedOutlineColorInt(token) {
@@ -116,7 +148,6 @@ function resolvedOutlineColorInt(token) {
 }
 
 function resolvedGlowColorInt(token) {
-  if (getDisableGlow()) return null;
   const isMyTarget = getEnableTarget() && !!token[TARGET_KEY];
   if (isMyTarget) {
     const tg = getTargetGlowColor?.();
@@ -129,9 +160,6 @@ function resolvedGlowColorInt(token) {
   }
   return resolvedOutlineColorInt(token);
 }
-
-// Legacy shim; retained only if needed later
-// function resolvedColorInt(token) { return resolvedOutlineColorInt(token); }
 
 /* =================================================================================
  * PIXI filter helpers
@@ -280,7 +308,7 @@ function applyNativeTargetVisibility(token) {
  * ================================================================================= */
 
 function refreshToken(token) {
-  if (!token) return;
+  if (!token || token.destroyed) return;
 
   const show =
     token.controlled ||
@@ -320,7 +348,7 @@ Hooks.on("canvasReady", () => {
   if (Handlers._installed) return;
   Handlers._installed = true;
 
-  logOnce("ready", "info", `${LOG} ready — tokens:`, canvas.tokens?.placeables?.length ?? 0);
+  logOnce("ready", "info", "ready — tokens:", canvas.tokens?.placeables?.length ?? 0);
 
   // Hover → show outline/glow (and sync native vis)
   Handlers.hover = Hooks.on("hoverToken", (token, hovered) => {
@@ -340,14 +368,14 @@ Hooks.on("canvasReady", () => {
     refreshToken(token);
   });
 
-  // Token disposition changes (only relevant for non-condition mode)
+  // Token disposition changes (relevant for disposition mode)
   Handlers.updateDoc = Hooks.on("updateToken", (doc, changes) => {
     if (getMode() !== "condition" && !("disposition" in changes)) return;
     const t = canvas.tokens?.get(doc.id);
     if (t) refreshToken(t);
   });
 
-  // Actor HP/condition changes (only relevant for condition mode)
+  // Actor HP/condition changes (relevant for condition mode)
   Handlers.updateActor = Hooks.on("updateActor", (actor) => {
     if (getMode() !== "condition") return;
     for (const t of canvas.tokens?.placeables ?? []) {
@@ -355,13 +383,13 @@ Hooks.on("canvasReady", () => {
     }
   });
 
-  // Settings changes (client-scoped) → update native vis or full refresh
+  // Settings changes → update native vis or full refresh
   Handlers.updateSetting = Hooks.on("updateSetting", (setting) => {
     if (!setting?.key?.startsWith?.(`${MODULE_ID}.`)) return;
 
+    // Native visibility toggles apply immediately
     if (setting.key === `${MODULE_ID}.hideDefaultBorder` ||
         setting.key === `${MODULE_ID}.hideTargetIndicator`) {
-      // Apply the native vis toggles immediately
       for (const t of canvas.tokens?.placeables ?? []) {
         applyNativeBorderVisibility(t);
         applyNativeTargetVisibility(t);
@@ -369,8 +397,8 @@ Hooks.on("canvasReady", () => {
       return;
     }
 
+    // For mode, enableTarget, and any color changes, just refresh
     for (const t of canvas.tokens?.placeables ?? []) {
-      // Recompute TARGET_KEY when enableTarget flips
       if (setting.key === `${MODULE_ID}.enableTarget`) {
         t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
       }
@@ -414,6 +442,5 @@ Hooks.once("shutdown", () => {
   Object.keys(Handlers).forEach(k => delete Handlers[k]);
   Handlers._installed = false;
 
-  logOnce("shutdown", "info", `${LOG} shutdown — handlers removed`);
+  logOnce("shutdown", "info", "shutdown — handlers removed");
 });
-
