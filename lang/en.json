@@ -45,6 +45,12 @@
         }
       },
 
+      "useClientColors": {
+        "name": "Use personal colors on this device",
+        "hint": "Use your personal color choices (saved in this browser) instead of the world defaults.",
+        "hintGM": "Use your personal color choices (saved in this browser). Turn this OFF to edit and apply world defaults visible to everyone whose personal override is OFF."
+      },
+
       "colorMenu": {
         "name": "Customize Colors",
         "label": "Customize Colors",
