@@ -50,7 +50,14 @@
         "label": "Customize Colors",
         "hint": "Open a color panel to set outline and glow colors for selected and targeted tokens.",
         "saved": "Pixie Border: Colors updated.",
-        "reset": "Pixie Border: Colors reset to defaults."
+        "reset": "Pixie Border: Colors reset to defaults.",
+        "invalidHex": "Please enter a valid color (e.g., #88ccff or rgb(136,204,255))."
+      },
+
+      "colorSections": {
+        "core": "Custom Colors",
+        "disposition": "Disposition Colors",
+        "condition": "Condition Colors"
       },
 
       "outlineColor": {
@@ -67,7 +74,37 @@
       },
       "targetGlowColor": {
         "name": "Target Glow Color",
-        "hint": "Sets the outline color for targeted tokens when target border is enabled. Default: #88ccff"
+        "hint": "Sets the glow color for targeted tokens when target border is enabled. Default: #88ccff"
+      },
+
+      "dispositionHostileColor": {
+        "name": "Hostile Color",
+        "hint": "Used for hostile tokens when Color Mode is set to Disposition."
+      },
+      "dispositionFriendlyColor": {
+        "name": "Friendly Color",
+        "hint": "Used for friendly tokens when Color Mode is set to Disposition."
+      },
+      "dispositionNeutralColor": {
+        "name": "Neutral Color",
+        "hint": "Used for neutral tokens when Color Mode is set to Disposition."
+      },
+      "dispositionSecretColor": {
+        "name": "Secret Color",
+        "hint": "Used for secret/hidden tokens when Color Mode is set to Disposition."
+      },
+
+      "conditionHighColor": {
+        "name": "High HP Color",
+        "hint": "Used when the token is at high health (e.g., ≥ 66%)."
+      },
+      "conditionMidColor": {
+        "name": "Mid HP Color",
+        "hint": "Used when the token is at moderate health (e.g., 33–66%)."
+      },
+      "conditionLowColor": {
+        "name": "Low HP Color",
+        "hint": "Used when the token is at low health (e.g., ≤ 33%)."
       }
     },
 
