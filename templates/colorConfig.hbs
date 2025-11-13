@@ -1,5 +1,10 @@
-<form class="pixie-border-colors flexcol" autocomplete="off">
-  <section class="form-body">
+<form class="pixie-border-colors flexcol"
+      autocomplete="off"
+      style="height: 100%; overflow: hidden;">
+
+  <!-- Scrollable content area -->
+  <section class="form-body flexcol"
+           style="flex: 1 1 auto; overflow-y: auto; padding-right: 0.25rem;">
 
     <!-- Core Custom Colors (Mode: Custom) -->
     <h3>{{localize "pixie-border.settings.colorSections.core"}}</h3>
@@ -41,7 +46,9 @@
     </div>
 
     <!-- Disposition Colors (Mode: Disposition) -->
-    <h3>{{localize "pixie-border.settings.colorSections.disposition"}}</h3>
+    <h3 style="margin-top: 1rem;">
+      {{localize "pixie-border.settings.colorSections.disposition"}}
+    </h3>
 
     <div class="form-group">
       <label>{{localize "pixie-border.settings.dispositionHostileColor.name"}}</label>
@@ -80,7 +87,9 @@
     </div>
 
     <!-- Condition Colors (Mode: Condition) -->
-    <h3>{{localize "pixie-border.settings.colorSections.condition"}}</h3>
+    <h3 style="margin-top: 1rem;">
+      {{localize "pixie-border.settings.colorSections.condition"}}
+    </h3>
 
     <div class="form-group">
       <label>{{localize "pixie-border.settings.conditionHighColor.name"}}</label>
@@ -111,14 +120,22 @@
 
   </section>
 
-  <footer class="dialog-buttons" style="gap:.5rem;">
-    <button type="submit" class="flex1">
+  <!-- Fixed footer (non-scrolling) -->
+  <footer class="dialog-buttons flexrow"
+          style="flex: 0 0 auto; gap: .5rem; margin-top: .5rem; padding-top: .25rem;">
+
+    <button type="submit" class="flex1"
+            style="height: 2rem; padding: 0.2rem 0.5rem; line-height: 1.4;">
       <i class="fas fa-check"></i> {{localize "pixie-border.common.save"}}
     </button>
-    <button type="button" data-action="reset" class="flex1">
+
+    <button type="button" data-action="reset" class="flex1"
+            style="height: 2rem; padding: 0.2rem 0.5rem; line-height: 1.4;">
       <i class="fas fa-undo"></i> {{localize "pixie-border.common.reset"}}
     </button>
-    <button type="button" data-action="cancel">
+
+    <button type="button" data-action="cancel" class="flex1"
+            style="height: 2rem; padding: 0.2rem 0.5rem; line-height: 1.4;">
       <i class="fas fa-times"></i> {{localize "pixie-border.common.cancel"}}
     </button>
   </footer>
