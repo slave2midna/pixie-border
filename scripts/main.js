@@ -555,16 +555,19 @@ Hooks.on("canvasReady", () => {
     }
   });
 
+  // Combat start → immediately highlight first combatant
+  Handlers.combatStart = Hooks.on("combatStart", (combat) => {
+    updateCombatTokenFromCombat(combat);
+  });
+
   // Combat turn change → update active combatant flicker
   Handlers.combatTurn = Hooks.on("combatTurn", (combat) => {
     updateCombatTokenFromCombat(combat);
   });
 
-  Handlers.updateCombat = Hooks.on("updateCombat", (combat, changed) => {
-    changed = changed || {};
-    if ("turn" in changed || "combatantId" in changed || "round" in changed) {
-      updateCombatTokenFromCombat(combat);
-    }
+  // Any combat update (round/turn/flags/etc) → re-evaluate
+  Handlers.updateCombat = Hooks.on("updateCombat", (combat /*, changed, options, userId */) => {
+    updateCombatTokenFromCombat(combat);
   });
 
   // Initial pass across my scene tokens
@@ -589,6 +592,7 @@ Hooks.once("shutdown", () => {
   off("updateSetting",Handlers.updateSetting);
   off("refreshToken", Handlers.refreshToken);
   off("deleteToken",  Handlers.delete);
+  off("combatStart",  Handlers.combatStart);
   off("combatTurn",   Handlers.combatTurn);
   off("updateCombat", Handlers.updateCombat);
 
