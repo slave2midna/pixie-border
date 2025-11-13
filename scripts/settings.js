@@ -6,9 +6,7 @@ const CORE_KEYS = [
   "outlineColor",
   "targetOutlineColor",
   "glowColor",
-  "targetGlowColor",
-  "combatOutlineColor",
-  "combatGlowColor"
+  "targetGlowColor"
 ];
 const DISP_KEYS = [
   "dispositionHostileColor",
@@ -29,8 +27,6 @@ const COLOR_DEFAULTS = {
   targetOutlineColor: "#88ccff",
   glowColor: "#88ccff",
   targetGlowColor: "#88ccff",
-  combatOutlineColor: "#ff8800",
-  combatGlowColor: "#ff8800",
   dispositionHostileColor: "#ff3a3a",
   dispositionFriendlyColor: "#2ecc71",
   dispositionNeutralColor: "#f1c40f",
@@ -83,8 +79,6 @@ class PixieBorderColorConfig extends FormApplication {
       targetOutlineColor: g("targetOutlineColor"),
       glowColor: g("glowColor"),
       targetGlowColor: g("targetGlowColor"),
-      combatOutlineColor: g("combatOutlineColor"),
-      combatGlowColor: g("combatGlowColor"),
 
       // Disposition (client)
       dispositionHostileColor: g("dispositionHostileColor"),
@@ -249,10 +243,10 @@ Hooks.once("init", () => {
     default: false
   });
 
-  // Placeholder for flicker speed (1–3)
-  game.settings.register(MODULE_ID, "flickerSpeed", {
-    name: game.i18n.localize("pixie-border.settings.flickerSpeed.name"),
-    hint: game.i18n.localize("pixie-border.settings.flickerSpeed.hint"),
+  // Placeholder for combat border speed (1–3)
+  game.settings.register(MODULE_ID, "combatBorderSpeed", {
+    name: game.i18n.localize("pixie-border.settings.combatBorderSpeed.name"),
+    hint: game.i18n.localize("pixie-border.settings.combatBorderSpeed.hint"),
     scope: "client",
     config: true,
     type: Number,
@@ -323,4 +317,4 @@ Hooks.once("init", () => {
       type: new colorField({ initial: COLOR_DEFAULTS[k] })
     });
   }
-});-
+});
