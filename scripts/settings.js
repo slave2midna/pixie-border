@@ -199,6 +199,16 @@ Hooks.once("init", () => {
     default: false
   });
 
+  // NEW: placeholder for combat border
+  game.settings.register(MODULE_ID, "enableCombatBorder", {
+    name: game.i18n.localize("pixie-border.settings.enableCombatBorder.name"),
+    hint: game.i18n.localize("pixie-border.settings.enableCombatBorder.hint"),
+    scope: "client",
+    config: true,
+    type: Boolean,
+    default: false
+  });
+
   game.settings.register(MODULE_ID, "disableOutline", {
     name: game.i18n.localize("pixie-border.settings.disableOutline.name"),
     hint: game.i18n.localize("pixie-border.settings.disableOutline.hint"),
@@ -215,6 +225,17 @@ Hooks.once("init", () => {
     config: true,
     type: Boolean,
     default: false
+  });
+
+  // NEW: placeholder for flicker speed (1–3)
+  game.settings.register(MODULE_ID, "flickerSpeed", {
+    name: game.i18n.localize("pixie-border.settings.flickerSpeed.name"),
+    hint: game.i18n.localize("pixie-border.settings.flickerSpeed.hint"),
+    scope: "client",
+    config: true,
+    type: Number,
+    default: 2,
+    range: { min: 1, max: 3, step: 1 }
   });
 
   // --- Numeric controls ----------------------------------------------
