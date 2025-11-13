@@ -610,12 +610,9 @@ Hooks.on("canvasReady", () => {
     updateCombatTokenFromCombat(combat);
   });
 
-  // Combat update (round/turn/active combatant) → re-evaluate
-  Handlers.updateCombat = Hooks.on("updateCombat", (combat, changed) => {
-    changed = changed || {};
-    if ("turn" in changed || "combatantId" in changed || "round" in changed) {
-      updateCombatTokenFromCombat(combat);
-    }
+  // Combat update → always re-evaluate active combatant
+  Handlers.updateCombat = Hooks.on("updateCombat", (combat/*, changed*/) => {
+    updateCombatTokenFromCombat(combat);
   });
 
   // Initial pass across my scene tokens
