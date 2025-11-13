@@ -2,9 +2,25 @@ const MODULE_ID = "pixie-border";
 const TEMPLATE_PATH = `modules/pixie-border/templates/colorConfig.hbs`;
 
 // Key groups
-const CORE_KEYS = ["outlineColor","targetOutlineColor","glowColor","targetGlowColor"];
-const DISP_KEYS = ["dispositionHostileColor","dispositionFriendlyColor","dispositionNeutralColor","dispositionSecretColor"];
-const COND_KEYS = ["conditionHighColor","conditionMidColor","conditionLowColor"];
+const CORE_KEYS = [
+  "outlineColor",
+  "targetOutlineColor",
+  "glowColor",
+  "targetGlowColor",
+  "combatOutlineColor",
+  "combatGlowColor"
+];
+const DISP_KEYS = [
+  "dispositionHostileColor",
+  "dispositionFriendlyColor",
+  "dispositionNeutralColor",
+  "dispositionSecretColor"
+];
+const COND_KEYS = [
+  "conditionHighColor",
+  "conditionMidColor",
+  "conditionLowColor"
+];
 const ALL_COLOR_KEYS = [...CORE_KEYS, ...DISP_KEYS, ...COND_KEYS];
 
 // Color defaults
@@ -13,6 +29,8 @@ const COLOR_DEFAULTS = {
   targetOutlineColor: "#88ccff",
   glowColor: "#88ccff",
   targetGlowColor: "#88ccff",
+  combatOutlineColor: "#ff8800",
+  combatGlowColor: "#ff8800",
   dispositionHostileColor: "#ff3a3a",
   dispositionFriendlyColor: "#2ecc71",
   dispositionNeutralColor: "#f1c40f",
@@ -65,11 +83,15 @@ class PixieBorderColorConfig extends FormApplication {
       targetOutlineColor: g("targetOutlineColor"),
       glowColor: g("glowColor"),
       targetGlowColor: g("targetGlowColor"),
+      combatOutlineColor: g("combatOutlineColor"),
+      combatGlowColor: g("combatGlowColor"),
+
       // Disposition (client)
       dispositionHostileColor: g("dispositionHostileColor"),
       dispositionFriendlyColor: g("dispositionFriendlyColor"),
       dispositionNeutralColor: g("dispositionNeutralColor"),
       dispositionSecretColor: g("dispositionSecretColor"),
+
       // Condition (client)
       conditionHighColor: g("conditionHighColor"),
       conditionMidColor: g("conditionMidColor"),
@@ -199,7 +221,7 @@ Hooks.once("init", () => {
     default: false
   });
 
-  // NEW: placeholder for combat border
+  // Placeholder for combat border toggle
   game.settings.register(MODULE_ID, "enableCombatBorder", {
     name: game.i18n.localize("pixie-border.settings.enableCombatBorder.name"),
     hint: game.i18n.localize("pixie-border.settings.enableCombatBorder.hint"),
@@ -227,7 +249,7 @@ Hooks.once("init", () => {
     default: false
   });
 
-  // NEW: placeholder for flicker speed (1–3)
+  // Placeholder for flicker speed (1–3)
   game.settings.register(MODULE_ID, "flickerSpeed", {
     name: game.i18n.localize("pixie-border.settings.flickerSpeed.name"),
     hint: game.i18n.localize("pixie-border.settings.flickerSpeed.hint"),
@@ -301,4 +323,4 @@ Hooks.once("init", () => {
       type: new colorField({ initial: COLOR_DEFAULTS[k] })
     });
   }
-});
+});-
