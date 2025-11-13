@@ -285,13 +285,17 @@ function removeGlow(token) {
 }
 
 /* =================================================================================
- * Combat highlighting (active turn flicker — alpha-based)
+ * Combat highlighting (active turn flicker — smooth alpha pulse)
  * ================================================================================= */
+
+const MIN_COMBAT_ALPHA = 0.25; // lowest visibility
+const MAX_COMBAT_ALPHA = 1.0;  // full visibility
 
 const CombatFX = {
   token: null,
   intervalId: null,
-  visible: true
+  alpha: MAX_COMBAT_ALPHA,
+  dir: -1  // -1 = fade out, 1 = fade in
 };
 
 function getActiveCombat() {
@@ -299,12 +303,12 @@ function getActiveCombat() {
   return game.combats?.active ?? game.combat ?? null;
 }
 
-// Map 1–3 to slow/medium/fast pulse
-function getCombatIntervalMs() {
+// Step size per tick (not interval) for each speed setting
+function getCombatStep() {
   const speed = getCombatBorderSpeed();
-  if (speed <= 1) return 600;   // slow
-  if (speed >= 3) return 200;   // rapid
-  return 350;                   // medium
+  if (speed <= 1) return 0.03; // slow, gentle
+  if (speed === 2) return 0.06; // medium
+  return 0.1; // fast
 }
 
 function clearCombatInterval() {
@@ -312,11 +316,12 @@ function clearCombatInterval() {
     clearInterval(CombatFX.intervalId);
     CombatFX.intervalId = null;
   }
-  CombatFX.visible = true;
+  CombatFX.alpha = MAX_COMBAT_ALPHA;
+  CombatFX.dir   = -1;
 }
 
 /**
- * Core: just mark which token is the active combatant and ensure filters exist.
+ * Mark which token is the active combatant and ensure filters exist.
  * Flicker is handled only by changing filter alpha in the interval.
  */
 function setCombatToken(token) {
@@ -327,13 +332,15 @@ function setCombatToken(token) {
   if (old) {
     old[COMBAT_KEY] = false;
     // Restore full alpha on old token's filters
-    if (old[OUTLINE_KEY]) old[OUTLINE_KEY].alpha = 1;
-    if (old[GLOW_KEY])    old[GLOW_KEY].alpha    = 1;
+    if (old[OUTLINE_KEY]) old[OUTLINE_KEY].alpha = MAX_COMBAT_ALPHA;
+    if (old[GLOW_KEY])    old[GLOW_KEY].alpha    = MAX_COMBAT_ALPHA;
     if (!old.destroyed) refreshToken(old);
   }
 
   // Set new token
   CombatFX.token = (token && !token.destroyed) ? token : null;
+  CombatFX.alpha = MAX_COMBAT_ALPHA;
+  CombatFX.dir   = -1;
 
   if (CombatFX.token && getEnableCombatBorder()) {
     CombatFX.token[COMBAT_KEY] = true;
@@ -347,7 +354,9 @@ function setCombatToken(token) {
 
 function ensureCombatInterval() {
   if (CombatFX.intervalId != null) return;
-  const interval = getCombatIntervalMs();
+
+  // Fixed interval for smoothness; speed is handled by step size
+  const interval = 50; // ~20 FPS
 
   CombatFX.intervalId = window.setInterval(() => {
     if (!getEnableCombatBorder()) {
@@ -361,17 +370,34 @@ function ensureCombatInterval() {
       return;
     }
 
-    // Toggle visible flag and apply as alpha on filters
-    CombatFX.visible = !CombatFX.visible;
-    const alpha = CombatFX.visible ? 1 : 0;
+    // If the token is actively interacted with, pin alpha to full (no flicker)
+    const hoverLike =
+      t.controlled ||
+      !!t[HOVER_KEY] ||
+      (getEnableTarget() && !!t[TARGET_KEY]);
+
+    if (hoverLike) {
+      CombatFX.alpha = MAX_COMBAT_ALPHA;
+      CombatFX.dir   = -1;
+    } else {
+      const step = getCombatStep();
+      CombatFX.alpha += CombatFX.dir * step;
+
+      if (CombatFX.alpha <= MIN_COMBAT_ALPHA) {
+        CombatFX.alpha = MIN_COMBAT_ALPHA;
+        CombatFX.dir   = 1;
+      } else if (CombatFX.alpha >= MAX_COMBAT_ALPHA) {
+        CombatFX.alpha = MAX_COMBAT_ALPHA;
+        CombatFX.dir   = -1;
+      }
+    }
 
     const outline = t[OUTLINE_KEY];
     const glow    = t[GLOW_KEY];
 
-    if (outline) outline.alpha = alpha;
-    if (glow)    glow.alpha    = alpha;
-
-    // No need to call refreshToken here; PIXI will redraw based on alpha change
+    if (outline) outline.alpha = CombatFX.alpha;
+    if (glow)    glow.alpha    = CombatFX.alpha;
+    // No need to call refreshToken; PIXI redraws based on alpha change
   }, interval);
 }
 
@@ -541,11 +567,9 @@ Hooks.on("canvasReady", () => {
         updateCombatTokenFromCombat(getActiveCombat());
       }
     } else if (setting.key === `${MODULE_ID}.combatBorderSpeed`) {
-      // Restart interval with new speed if active
-      if (CombatFX.token && getEnableCombatBorder()) {
-        clearCombatInterval();
-        ensureCombatInterval();
-      }
+      // Just reset alpha/dir; interval already running will pick new step
+      CombatFX.alpha = MAX_COMBAT_ALPHA;
+      CombatFX.dir   = -1;
     }
 
     // For mode, enableTarget, and any color changes, just refresh
