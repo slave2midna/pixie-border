@@ -9,10 +9,16 @@
         "name": "Hide Foundry Target Indicator",
         "hint": "Remove Foundry’s default targeting indicator."
       },
+
       "enableTarget": {
         "name": "Enable Target Border",
         "hint": "Also show the outline and glow on tokens you target."
       },
+      "enableCombatBorder": {
+        "name": "Enable Combat Border",
+        "hint": "Show an animated border for the active combatant."
+      },
+
       "disableOutline": {
         "name": "Disable Outline Filter",
         "hint": "Turn this on to completely disable the outline filter."
@@ -20,6 +26,11 @@
       "disableGlow": {
         "name": "Disable Glow Filter",
         "hint": "Turn this on to completely disable the glow filter."
+      },
+
+      "flickerSpeed": {
+        "name": "Flicker Speed",
+        "hint": "Set the speed of the combat border animation."
       },
 
       "thickness": {
