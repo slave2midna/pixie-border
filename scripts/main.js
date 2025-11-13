@@ -5,7 +5,7 @@ const OUTLINE_KEY = "_pixiOutlineFilter";
 const HOVER_KEY   = "_pixiHover";
 const TARGET_KEY  = "_pixiTarget";
 const GLOW_KEY    = "_pixiGlowFilter";
-const COMBAT_KEY  = "_pixiCombatActive";
+const COMBAT_KEY  = "_pixiCombatActive";   // active combatant flicker flag
 
 // Hardcoded PIXI settings
 const OUTLINE_QUALITY = 1;
@@ -361,6 +361,12 @@ function ensureCombatInterval() {
 }
 
 function updateCombatTokenFromCombat(combat) {
+  // Extra safety: don't do anything until canvas is fully ready
+  if (!canvas?.ready || !canvas.scene) {
+    setCombatToken(null);
+    return;
+  }
+
   if (!getEnableCombatBorder()) {
     setCombatToken(null);
     return;
@@ -388,6 +394,16 @@ function updateCombatTokenFromCombat(combat) {
   const tokenId = c.token?.id ?? c.tokenId;
   const token   = canvas.tokens?.get?.(tokenId) ?? null;
   setCombatToken(token);
+}
+
+// Robust wrapper so our errors never interfere with Foundry or the combat tracker
+function safeUpdateCombatTokenFromCombat(combat) {
+  try {
+    updateCombatTokenFromCombat(combat);
+  } catch (err) {
+    console.error(LOG, "Combat highlight error:", err);
+    setCombatToken(null);
+  }
 }
 
 /* =================================================================================
@@ -518,7 +534,7 @@ Hooks.on("canvasReady", () => {
       if (!getEnableCombatBorder()) {
         setCombatToken(null);
       } else {
-        updateCombatTokenFromCombat(getActiveCombat());
+        safeUpdateCombatTokenFromCombat(getActiveCombat());
       }
     } else if (setting.key === `${MODULE_ID}.combatBorderSpeed`) {
       // Restart interval with new speed if active
@@ -555,19 +571,9 @@ Hooks.on("canvasReady", () => {
     }
   });
 
-  // Combat start → immediately highlight first combatant
-  Handlers.combatStart = Hooks.on("combatStart", (combat) => {
-    updateCombatTokenFromCombat(combat);
-  });
-
   // Combat turn change → update active combatant flicker
   Handlers.combatTurn = Hooks.on("combatTurn", (combat) => {
-    updateCombatTokenFromCombat(combat);
-  });
-
-  // Any combat update (round/turn/flags/etc) → re-evaluate
-  Handlers.updateCombat = Hooks.on("updateCombat", (combat /*, changed, options, userId */) => {
-    updateCombatTokenFromCombat(combat);
+    safeUpdateCombatTokenFromCombat(combat);
   });
 
   // Initial pass across my scene tokens
@@ -578,8 +584,13 @@ Hooks.on("canvasReady", () => {
     refreshToken(t);
   }
 
-  // If there is an active combat on this scene, start flicker
-  updateCombatTokenFromCombat(getActiveCombat());
+  // One-shot delayed init to pick up any already-active combat on this scene
+  if (getEnableCombatBorder()) {
+    window.setTimeout(() => {
+      if (!canvas?.ready || !canvas.scene) return;
+      safeUpdateCombatTokenFromCombat(getActiveCombat());
+    }, 50);
+  }
 });
 
 Hooks.once("shutdown", () => {
@@ -592,9 +603,7 @@ Hooks.once("shutdown", () => {
   off("updateSetting",Handlers.updateSetting);
   off("refreshToken", Handlers.refreshToken);
   off("deleteToken",  Handlers.delete);
-  off("combatStart",  Handlers.combatStart);
   off("combatTurn",   Handlers.combatTurn);
-  off("updateCombat", Handlers.updateCombat);
 
   clearCombatInterval();
   setCombatToken(null);
