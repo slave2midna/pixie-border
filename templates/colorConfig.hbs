@@ -1,5 +1,7 @@
 <form class="pixie-border-colors flexcol" autocomplete="off">
-  <section class="form-body" style="overflow-y: auto; max-height: 32rem; padding-right: 0.25rem;">
+  <!-- Scrollable content should take most of the height -->
+  <section class="form-body flexcol"
+           style="flex: 1 1 auto; overflow-y: auto; padding-right: 0.25rem;">
 
     <!-- Core Custom Colors (Mode: Custom) -->
     <h3>{{localize "pixie-border.settings.colorSections.core"}}</h3>
@@ -111,14 +113,22 @@
 
   </section>
 
-  <footer class="dialog-buttons flexrow" style="gap: .5rem; margin-top: .5rem;">
-    <button type="submit" class="flex1" style="height: 2rem; padding: 0.25rem 0.5rem;">
+  <!-- Slim footer row, ~5–10% height -->
+  <footer class="dialog-buttons flexrow"
+          style="flex: 0 0 auto; gap: .5rem; margin-top: .5rem; padding-top: .25rem;">
+
+    <button type="submit" class="flex1"
+            style="height: 2rem; padding: 0.2rem 0.5rem; line-height: 1.4;">
       <i class="fas fa-check"></i> {{localize "pixie-border.common.save"}}
     </button>
-    <button type="button" data-action="reset" class="flex1" style="height: 2rem; padding: 0.25rem 0.5rem;">
+
+    <button type="button" data-action="reset" class="flex1"
+            style="height: 2rem; padding: 0.2rem 0.5rem; line-height: 1.4;">
       <i class="fas fa-undo"></i> {{localize "pixie-border.common.reset"}}
     </button>
-    <button type="button" data-action="cancel" class="flex1" style="height: 2rem; padding: 0.25rem 0.5rem;">
+
+    <button type="button" data-action="cancel" class="flex1"
+            style="height: 2rem; padding: 0.2rem 0.5rem; line-height: 1.4;">
       <i class="fas fa-times"></i> {{localize "pixie-border.common.cancel"}}
     </button>
   </footer>
