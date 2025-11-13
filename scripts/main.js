@@ -5,6 +5,7 @@ const OUTLINE_KEY = "_pixiOutlineFilter";
 const HOVER_KEY   = "_pixiHover";
 const TARGET_KEY  = "_pixiTarget";
 const GLOW_KEY    = "_pixiGlowFilter";
+const COMBAT_KEY  = "_pixiCombatActive";   // marks active combatant
 
 // Hardcoded PIXI settings
 const OUTLINE_QUALITY = 1;
@@ -40,11 +41,19 @@ function getCondMid()  { return game.settings.get(MODULE_ID, "conditionMidColor"
 function getCondLow()  { return game.settings.get(MODULE_ID, "conditionLowColor"); }
 
 // Toggles
-function getDisableOutline()   { return !!game.settings.get(MODULE_ID, "disableOutline"); }
-function getDisableGlow()      { return !!game.settings.get(MODULE_ID, "disableGlow"); }
-function getEnableTarget()     { return !!game.settings.get(MODULE_ID, "enableTarget"); }
-function getHideDefault()      { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
-function getHideIndicator()    { return !!game.settings.get(MODULE_ID, "hideTargetIndicator"); }
+function getDisableOutline()      { return !!game.settings.get(MODULE_ID, "disableOutline"); }
+function getDisableGlow()         { return !!game.settings.get(MODULE_ID, "disableGlow"); }
+function getEnableTarget()        { return !!game.settings.get(MODULE_ID, "enableTarget"); }
+function getHideDefault()         { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
+function getHideIndicator()       { return !!game.settings.get(MODULE_ID, "hideTargetIndicator"); }
+function getEnableCombatBorder()  { return !!game.settings.get(MODULE_ID, "enableCombatBorder"); }
+
+// 1 = slow pulse, 2 = medium pulse, 3 = rapid pulse
+function getCombatBorderSpeed() {
+  let s = Number(game.settings.get(MODULE_ID, "combatBorderSpeed"));
+  if (!Number.isFinite(s)) s = 2;
+  return Math.min(3, Math.max(1, Math.round(s)));
+}
 
 // Numbers
 function getThickness() {
@@ -276,6 +285,159 @@ function removeGlow(token) {
 }
 
 /* =================================================================================
+ * Combat highlighting (active turn flicker — smooth alpha pulse)
+ * ================================================================================= */
+
+const MIN_COMBAT_ALPHA = 0.25; // lowest visibility
+const MAX_COMBAT_ALPHA = 1.0;  // full visibility
+
+const CombatFX = {
+  token: null,
+  intervalId: null,
+  alpha: MAX_COMBAT_ALPHA,
+  dir: -1  // -1 = fade out, 1 = fade in
+};
+
+function getActiveCombat() {
+  // v12+ uses game.combats.active; older still expose game.combat
+  return game.combats?.active ?? game.combat ?? null;
+}
+
+// Step size per tick (not interval) for each speed setting
+// 1 = current "slow" pulse, 2 & 3 are progressively faster
+function getCombatStep() {
+  const speed = getCombatBorderSpeed();
+  if (speed <= 1) return 0.03;  // slow, gentle
+  if (speed === 2) return 0.09; // ~3x faster than slow
+  return 0.18;                  // ~6x faster than slow
+}
+
+function clearCombatInterval() {
+  if (CombatFX.intervalId != null) {
+    clearInterval(CombatFX.intervalId);
+    CombatFX.intervalId = null;
+  }
+  CombatFX.alpha = MAX_COMBAT_ALPHA;
+  CombatFX.dir   = -1;
+}
+
+/**
+ * Mark which token is the active combatant and ensure filters exist.
+ * Flicker is handled only by changing filter alpha in the interval.
+ */
+function setCombatToken(token) {
+  const old = CombatFX.token;
+  if (old === token) return;
+
+  // Clear old token
+  if (old) {
+    old[COMBAT_KEY] = false;
+    // Restore full alpha on old token's filters
+    if (old[OUTLINE_KEY]) old[OUTLINE_KEY].alpha = MAX_COMBAT_ALPHA;
+    if (old[GLOW_KEY])    old[GLOW_KEY].alpha    = MAX_COMBAT_ALPHA;
+    if (!old.destroyed) refreshToken(old);
+  }
+
+  // Set new token
+  CombatFX.token = (token && !token.destroyed) ? token : null;
+  CombatFX.alpha = MAX_COMBAT_ALPHA;
+  CombatFX.dir   = -1;
+
+  if (CombatFX.token && getEnableCombatBorder()) {
+    CombatFX.token[COMBAT_KEY] = true;
+    // Ensure outline/glow applied for this token
+    refreshToken(CombatFX.token);
+    ensureCombatInterval();
+  } else {
+    clearCombatInterval();
+  }
+}
+
+function ensureCombatInterval() {
+  if (CombatFX.intervalId != null) return;
+
+  // Fixed interval for smoothness; speed is handled by step size
+  const interval = 50; // ~20 FPS
+
+  CombatFX.intervalId = window.setInterval(() => {
+    if (!getEnableCombatBorder()) {
+      setCombatToken(null);
+      return;
+    }
+
+    const t = CombatFX.token;
+    if (!t || t.destroyed || !canvas?.ready) {
+      setCombatToken(null);
+      return;
+    }
+
+    // If the token is actively interacted with, pin alpha to full (no flicker)
+    const hoverLike =
+      t.controlled ||
+      !!t[HOVER_KEY] ||
+      (getEnableTarget() && !!t[TARGET_KEY]);
+
+    if (hoverLike) {
+      CombatFX.alpha = MAX_COMBAT_ALPHA;
+      CombatFX.dir   = -1;
+    } else {
+      const step = getCombatStep();
+      CombatFX.alpha += CombatFX.dir * step;
+
+      if (CombatFX.alpha <= MIN_COMBAT_ALPHA) {
+        CombatFX.alpha = MIN_COMBAT_ALPHA;
+        CombatFX.dir   = 1;
+      } else if (CombatFX.alpha >= MAX_COMBAT_ALPHA) {
+        CombatFX.alpha = MAX_COMBAT_ALPHA;
+        CombatFX.dir   = -1;
+      }
+    }
+
+    const outline = t[OUTLINE_KEY];
+    const glow    = t[GLOW_KEY];
+
+    if (outline) outline.alpha = CombatFX.alpha;
+    if (glow)    glow.alpha    = CombatFX.alpha;
+    // No need to call refreshToken; PIXI redraws based on alpha change
+  }, interval);
+}
+
+function updateCombatTokenFromCombat(combat) {
+  if (!canvas?.ready || !canvas.scene) {
+    setCombatToken(null);
+    return;
+  }
+
+  if (!getEnableCombatBorder()) {
+    setCombatToken(null);
+    return;
+  }
+
+  combat = combat ?? getActiveCombat();
+  if (!combat) {
+    setCombatToken(null);
+    return;
+  }
+
+  // Only care if this combat is on our current scene
+  const sceneId = combat.scene?.id ?? combat.sceneId;
+  if (sceneId && canvas.scene && sceneId !== canvas.scene.id) {
+    setCombatToken(null);
+    return;
+  }
+
+  const c = combat.combatant;
+  if (!c) {
+    setCombatToken(null);
+    return;
+  }
+
+  const tokenId = c.token?.id ?? c.tokenId;
+  const token   = canvas.tokens?.get?.(tokenId) ?? null;
+  setCombatToken(token);
+}
+
+/* =================================================================================
  * Native border control
  * ================================================================================= */
 
@@ -313,7 +475,8 @@ function refreshToken(token) {
   const show =
     token.controlled ||
     !!token[HOVER_KEY] ||
-    (getEnableTarget() && !!token[TARGET_KEY]);
+    (getEnableTarget() && !!token[TARGET_KEY]) ||
+    (getEnableCombatBorder() && !!token[COMBAT_KEY]);  // active combatant
 
   const outlineColor = resolvedOutlineColorInt(token);
   const glowColor    = resolvedGlowColorInt(token);
@@ -397,6 +560,19 @@ Hooks.on("canvasReady", () => {
       return;
     }
 
+    // Combat flicker toggle / speed
+    if (setting.key === `${MODULE_ID}.enableCombatBorder`) {
+      if (!getEnableCombatBorder()) {
+        setCombatToken(null);
+      } else {
+        updateCombatTokenFromCombat(getActiveCombat());
+      }
+    } else if (setting.key === `${MODULE_ID}.combatBorderSpeed`) {
+      // Just reset alpha/dir; interval already running will pick new step
+      CombatFX.alpha = MAX_COMBAT_ALPHA;
+      CombatFX.dir   = -1;
+    }
+
     // For mode, enableTarget, and any color changes, just refresh
     for (const t of canvas.tokens?.placeables ?? []) {
       if (setting.key === `${MODULE_ID}.enableTarget`) {
@@ -415,7 +591,28 @@ Hooks.on("canvasReady", () => {
   // Clean up on token deletion
   Handlers.delete = Hooks.on("deleteToken", (scene, doc) => {
     const t = canvas.tokens?.get(doc.id);
-    if (t) { removeGlow(t); removeOutline(t); }
+    if (t) {
+      removeGlow(t);
+      removeOutline(t);
+      if (CombatFX.token && CombatFX.token === t) {
+        setCombatToken(null);
+      }
+    }
+  });
+
+  // Combat start → immediately highlight first combatant
+  Handlers.combatStart = Hooks.on("combatStart", (combat) => {
+    updateCombatTokenFromCombat(combat);
+  });
+
+  // Combat turn change → update active combatant flicker
+  Handlers.combatTurn = Hooks.on("combatTurn", (combat) => {
+    updateCombatTokenFromCombat(combat);
+  });
+
+  // Combat update → always re-evaluate active combatant
+  Handlers.updateCombat = Hooks.on("updateCombat", (combat/*, changed*/) => {
+    updateCombatTokenFromCombat(combat);
   });
 
   // Initial pass across my scene tokens
@@ -425,6 +622,9 @@ Hooks.on("canvasReady", () => {
     t[TARGET_KEY] = myTargets.has(t);
     refreshToken(t);
   }
+
+  // If there is an active combat on this scene, start flicker
+  updateCombatTokenFromCombat(getActiveCombat());
 });
 
 Hooks.once("shutdown", () => {
@@ -437,6 +637,12 @@ Hooks.once("shutdown", () => {
   off("updateSetting",Handlers.updateSetting);
   off("refreshToken", Handlers.refreshToken);
   off("deleteToken",  Handlers.delete);
+  off("combatStart",  Handlers.combatStart);
+  off("combatTurn",   Handlers.combatTurn);
+  off("updateCombat", Handlers.updateCombat);
+
+  clearCombatInterval();
+  setCombatToken(null);
 
   for (const t of canvas.tokens?.placeables ?? []) { removeGlow(t); removeOutline(t); }
   Object.keys(Handlers).forEach(k => delete Handlers[k]);
