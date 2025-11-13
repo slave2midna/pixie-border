@@ -304,11 +304,12 @@ function getActiveCombat() {
 }
 
 // Step size per tick (not interval) for each speed setting
+// 1 = current "slow" pulse, 2 & 3 are progressively faster
 function getCombatStep() {
   const speed = getCombatBorderSpeed();
-  if (speed <= 1) return 0.03; // slow, gentle
-  if (speed === 2) return 0.06; // medium
-  return 0.1; // fast
+  if (speed <= 1) return 0.03;  // slow, gentle
+  if (speed === 2) return 0.09; // ~3x faster than slow
+  return 0.18;                  // ~6x faster than slow
 }
 
 function clearCombatInterval() {
