@@ -63,8 +63,8 @@ class PixieBorderColorConfig extends FormApplication {
       title: game.i18n.localize("pixie-border.settings.colorMenu.name"),
       template: TEMPLATE_PATH,
       classes: ["pixie-border", "sheet"],
-      width: 520,
-      height: "auto",
+      width: 500,
+      height: "800",
       submitOnChange: false,
       closeOnSubmit: true
     });
@@ -318,3 +318,4 @@ Hooks.once("init", () => {
     });
   }
 });
+
