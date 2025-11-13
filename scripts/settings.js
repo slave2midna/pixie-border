@@ -64,7 +64,7 @@ class PixieBorderColorConfig extends FormApplication {
       template: TEMPLATE_PATH,
       classes: ["pixie-border", "sheet"],
       width: 500,
-      height: "800",
+      height: "600",
       submitOnChange: false,
       closeOnSubmit: true
     });
@@ -318,4 +318,5 @@ Hooks.once("init", () => {
     });
   }
 });
+
 
