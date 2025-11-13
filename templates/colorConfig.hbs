@@ -1,5 +1,5 @@
 <form class="pixie-border-colors flexcol" autocomplete="off">
-  <section class="form-body">
+  <section class="form-body" style="overflow-y: auto; max-height: 22rem; padding-right: 0.25rem;">
 
     <!-- Core Custom Colors (Mode: Custom) -->
     <h3>{{localize "pixie-border.settings.colorSections.core"}}</h3>
@@ -111,14 +111,14 @@
 
   </section>
 
-  <footer class="dialog-buttons" style="gap:.5rem;">
+  <footer class="dialog-buttons flexrow" style="gap: .5rem; margin-top: .5rem;">
     <button type="submit" class="flex1">
       <i class="fas fa-check"></i> {{localize "pixie-border.common.save"}}
     </button>
     <button type="button" data-action="reset" class="flex1">
       <i class="fas fa-undo"></i> {{localize "pixie-border.common.reset"}}
     </button>
-    <button type="button" data-action="cancel">
+    <button type="button" data-action="cancel" class="flex1">
       <i class="fas fa-times"></i> {{localize "pixie-border.common.cancel"}}
     </button>
   </footer>
