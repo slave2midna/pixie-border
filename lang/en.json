@@ -28,8 +28,8 @@
         "hint": "Turn this on to completely disable the glow filter."
       },
 
-      "flickerSpeed": {
-        "name": "Flicker Speed",
+      "combatBorderSpeed": {
+        "name": "Combat Border Speed",
         "hint": "Set the speed of the combat border animation."
       },
 
