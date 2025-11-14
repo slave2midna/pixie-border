@@ -44,7 +44,11 @@ function getCondLow()  { return game.settings.get(MODULE_ID, "conditionLowColor"
 function getDisableOutline()      { return !!game.settings.get(MODULE_ID, "disableOutline"); }
 function getDisableGlow()         { return !!game.settings.get(MODULE_ID, "disableGlow"); }
 function getEnableTarget()        { return !!game.settings.get(MODULE_ID, "enableTarget"); }
-function getHideDefault()         { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
+function getFoundryBorderMode() {
+  const v = game.settings.get(MODULE_ID, "foundryBorder");
+  if (v === "enabled" || v === "hover" || v === "disabled") return v;
+  return "disabled";
+}
 function getHideIndicator()       { return !!game.settings.get(MODULE_ID, "hideTargetIndicator"); }
 function getEnableCombatBorder()  { return !!game.settings.get(MODULE_ID, "enableCombatBorder"); }
 
@@ -455,8 +459,46 @@ function hideNativeBorder(token) {
   b.alpha = 0;
   if (typeof b.clear === "function") b.clear();
 }
+
+function showNativeBorder(token) {
+  const b = token?.border;
+  if (!b) return;
+  b.renderable = true;
+  b.visible = true;
+  if (b.alpha === 0) b.alpha = 1;
+}
+
+/**
+ * Apply native border visibility according to the foundryBorder mode:
+ * - "disabled": always hide the default Foundry border
+ * - "enabled":  always allow it (Foundry handles hover/selection)
+ * - "hover":    show only while hovered and not controlled
+ */
 function applyNativeBorderVisibility(token) {
-  if (getHideDefault()) hideNativeBorder(token);
+  const mode = getFoundryBorderMode();
+  const b = token?.border;
+  if (!b) return;
+
+  if (mode === "disabled") {
+    hideNativeBorder(token);
+    return;
+  }
+
+  if (mode === "enabled") {
+    // Let Foundry handle when to draw; just ensure it's not forcibly hidden
+    showNativeBorder(token);
+    return;
+  }
+
+  // Hover-only mode
+  if (mode === "hover") {
+    const shouldShow = !!token.hover && !token.controlled;
+    if (shouldShow) {
+      showNativeBorder(token);
+    } else {
+      hideNativeBorder(token);
+    }
+  }
 }
 
 function hideNativeIndicator(token) {
@@ -556,8 +598,8 @@ Hooks.on("canvasReady", () => {
   Handlers.updateSetting = Hooks.on("updateSetting", (setting) => {
     if (!setting?.key?.startsWith?.(`${MODULE_ID}.`)) return;
 
-    // Native visibility toggles apply immediately
-    if (setting.key === `${MODULE_ID}.hideDefaultBorder` ||
+    // Native visibility toggles / foundry border mode apply immediately
+    if (setting.key === `${MODULE_ID}.foundryBorder` ||
         setting.key === `${MODULE_ID}.hideTargetIndicator`) {
       for (const t of canvas.tokens?.placeables ?? []) {
         applyNativeBorderVisibility(t);
