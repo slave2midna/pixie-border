@@ -16,6 +16,4 @@ A module for [Foundry VTT](https://foundryvtt.com/). This module is designed to 
 
 ## Feedback
 
-Please report any bugs or suggest features using the Issues tab on GitHub.
-
-For questions and discussions, you can join the Project FU Discord Server [#support forum](https://discord.com/channels/1194506991754805278/1220562380568789063 "‌"). Before suggesting new features, please review the existing issues to avoid duplication.
+Please report any bugs or suggest features using the Issues tab on GitHub. Before suggesting new features, please review the existing issues to avoid duplication. If you would like to support this module by provided a new language, please reach out to me directly!
