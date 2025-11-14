@@ -12,12 +12,12 @@ const GUIDED_KEY  = "_pixiGuidedBorder";   // custom guided hover border
 const OUTLINE_QUALITY = 1;
 const OUTLINE_PADDING = 0;
 
-// Guided border config
-const GUIDED_COLOR   = 0x888888; // grey
+// Guided border defaults (settings may override color/opacity/style)
+const GUIDED_COLOR   = 0x888888; // default grey fallback
 const GUIDED_WIDTH   = 3;        // px
 const GUIDED_PADDING = 4;        // extra padding around token
-const GUIDED_DASH    = 8;        // dash length
-const GUIDED_GAP     = 4;        // gap length
+const GUIDED_DASH    = 8;        // dash length for dashed style
+const GUIDED_GAP     = 4;        // gap length for dashed style
 
 // Log helper
 const LOG = "[pixie-border]";
@@ -51,6 +51,21 @@ function getDispSecret()   { return game.settings.get(MODULE_ID, "dispositionSec
 function getCondHigh() { return game.settings.get(MODULE_ID, "conditionHighColor"); }
 function getCondMid()  { return game.settings.get(MODULE_ID, "conditionMidColor"); }
 function getCondLow()  { return game.settings.get(MODULE_ID, "conditionLowColor"); }
+
+// Guided border settings
+function getGuideColor() {
+  return game.settings.get(MODULE_ID, "guideColor");
+}
+function getGuideOpacity() {
+  let o = Number(game.settings.get(MODULE_ID, "guideOpacity"));
+  if (!Number.isFinite(o)) o = 0.75;
+  return Math.min(1, Math.max(0.25, o));
+}
+function getGuideStyle() {
+  const v = game.settings.get(MODULE_ID, "guideStyle");
+  if (v === "solid" || v === "dotted" || v === "dashed") return v;
+  return "dashed";
+}
 
 // Toggles
 function getDisableOutline()      { return !!game.settings.get(MODULE_ID, "disableOutline"); }
@@ -90,7 +105,7 @@ function getGlowOuterStrength() {
   return Math.min(10, Math.max(0, s));
 }
 
-// Convert CSS color to integer
+// Convert CSS color or similar to integer
 function cssToInt(color) {
   if (typeof color === "string") {
     if (foundry?.utils?.colorStringToHex) {
@@ -303,7 +318,7 @@ function removeGlow(token) {
 }
 
 /* =================================================================================
- * Guided hover border (custom dashed rectangle)
+ * Guided hover border (custom dashed / dotted / solid rectangle)
  * ================================================================================= */
 
 function removeGuidedBorder(token) {
@@ -379,14 +394,41 @@ function applyGuidedBorder(token) {
   const w = token.w + pad * 2;
   const h = token.h + pad * 2;
 
-  // Token's display origin is typically (0,0) at top-left for border,
-  // so we offset by -pad in both directions.
+  // Token's display origin is typically (0,0) at top-left, so offset by -pad.
   const x = -pad;
   const y = -pad;
 
+  // Resolve color & opacity from settings
+  let raw = getGuideColor?.();
+  let hexStr;
+  try {
+    if (raw instanceof foundry.utils.Color) {
+      hexStr = raw.toString(16, "#");
+    } else {
+      hexStr = String(raw ?? "#888888");
+    }
+  } catch {
+    hexStr = "#888888";
+  }
+  const colorInt = cssToInt(hexStr);
+  const alpha    = getGuideOpacity();
+  const style    = getGuideStyle();
+
   g.clear();
-  g.lineStyle(GUIDED_WIDTH, GUIDED_COLOR, 1);
-  drawDashedRect(g, x, y, w, h, GUIDED_DASH, GUIDED_GAP);
+  g.lineStyle(GUIDED_WIDTH, colorInt || GUIDED_COLOR, alpha);
+
+  if (style === "solid") {
+    // Simple solid rectangle
+    g.drawRect(x, y, w, h);
+  } else if (style === "dotted") {
+    // Smaller dash for dotted look
+    const dotDash = 2;
+    const dotGap  = 4;
+    drawDashedRect(g, x, y, w, h, dotDash, dotGap);
+  } else {
+    // "dashed" or fallback
+    drawDashedRect(g, x, y, w, h, GUIDED_DASH, GUIDED_GAP);
+  }
 }
 
 /* =================================================================================
@@ -727,7 +769,7 @@ Hooks.on("canvasReady", () => {
       CombatFX.dir   = -1;
     }
 
-    // For mode, enableTarget, and any color changes, just refresh
+    // For mode, enableTarget, and any color changes (including guide*)
     for (const t of canvas.tokens?.placeables ?? []) {
       if (setting.key === `${MODULE_ID}.enableTarget`) {
         t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
