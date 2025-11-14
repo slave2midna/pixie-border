@@ -1,6 +1,10 @@
 const MODULE_ID = "pixie-border";
 const TEMPLATE_PATH = `modules/pixie-border/templates/colorConfig.hbs`;
 
+// Prefer per-user settings in v13+; fall back to client in v12
+const PER_USER_SCOPE =
+  (globalThis.CONST?.SETTING_SCOPES?.USER) || "client";
+
 // Key groups
 const CORE_KEYS = [
   "outlineColor",
@@ -78,28 +82,28 @@ class PixieBorderColorConfig extends FormApplication {
     });
   }
 
-  // Provide client values to the template
+  // Provide values to the template
   async getData() {
     const g = (k) => asHexString(game.settings.get(MODULE_ID, k), COLOR_DEFAULTS[k]);
     return {
-      // Core (client)
+      // Core
       outlineColor: g("outlineColor"),
       targetOutlineColor: g("targetOutlineColor"),
       glowColor: g("glowColor"),
       targetGlowColor: g("targetGlowColor"),
 
-      // Disposition (client)
+      // Disposition
       dispositionHostileColor: g("dispositionHostileColor"),
       dispositionFriendlyColor: g("dispositionFriendlyColor"),
       dispositionNeutralColor: g("dispositionNeutralColor"),
       dispositionSecretColor: g("dispositionSecretColor"),
 
-      // Condition (client)
+      // Condition
       conditionHighColor: g("conditionHighColor"),
       conditionMidColor: g("conditionMidColor"),
       conditionLowColor: g("conditionLowColor"),
 
-      // Guided (client)
+      // Guided
       guideColor: g("guideColor")
     };
   }
@@ -176,7 +180,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "mode", {
     name: game.i18n.localize("pixie-border.settings.mode.name"),
     hint: game.i18n.localize("pixie-border.settings.mode.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: String,
     default: "disposition",
@@ -201,7 +205,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "foundryBorder", {
     name: game.i18n.localize("pixie-border.settings.foundryBorder.name"),
     hint: game.i18n.localize("pixie-border.settings.foundryBorder.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: String,
     requiresReload: true,
@@ -216,7 +220,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "hideTargetIndicator", {
     name: game.i18n.localize("pixie-border.settings.hideTargetIndicator.name"),
     hint: game.i18n.localize("pixie-border.settings.hideTargetIndicator.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: Boolean,
     default: false,
@@ -226,7 +230,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "enableTarget", {
     name: game.i18n.localize("pixie-border.settings.enableTarget.name"),
     hint: game.i18n.localize("pixie-border.settings.enableTarget.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: Boolean,
     default: false
@@ -236,7 +240,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "enableCombatBorder", {
     name: game.i18n.localize("pixie-border.settings.enableCombatBorder.name"),
     hint: game.i18n.localize("pixie-border.settings.enableCombatBorder.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: Boolean,
     default: false
@@ -245,7 +249,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "disableOutline", {
     name: game.i18n.localize("pixie-border.settings.disableOutline.name"),
     hint: game.i18n.localize("pixie-border.settings.disableOutline.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: Boolean,
     default: false
@@ -254,7 +258,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "disableGlow", {
     name: game.i18n.localize("pixie-border.settings.disableGlow.name"),
     hint: game.i18n.localize("pixie-border.settings.disableGlow.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: Boolean,
     default: false
@@ -264,7 +268,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "combatBorderSpeed", {
     name: game.i18n.localize("pixie-border.settings.combatBorderSpeed.name"),
     hint: game.i18n.localize("pixie-border.settings.combatBorderSpeed.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: Number,
     default: 2,
@@ -275,7 +279,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "thickness", {
     name: game.i18n.localize("pixie-border.settings.thickness.name"),
     hint: game.i18n.localize("pixie-border.settings.thickness.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: Number,
     default: 1,
@@ -285,7 +289,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "glowDistance", {
     name: game.i18n.localize("pixie-border.settings.glowDistance.name"),
     hint: game.i18n.localize("pixie-border.settings.glowDistance.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: Number,
     default: 10,
@@ -295,7 +299,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "glowOuterStrength", {
     name: game.i18n.localize("pixie-border.settings.glowOuterStrength.name"),
     hint: game.i18n.localize("pixie-border.settings.glowOuterStrength.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: Number,
     default: 3,
@@ -306,7 +310,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "guideOpacity", {
     name: game.i18n.localize("pixie-border.settings.guideOpacity.name"),
     hint: game.i18n.localize("pixie-border.settings.guideOpacity.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: Number,
     default: 75,
@@ -317,7 +321,7 @@ Hooks.once("init", () => {
   game.settings.register(MODULE_ID, "guideStyle", {
     name: game.i18n.localize("pixie-border.settings.guideStyle.name"),
     hint: game.i18n.localize("pixie-border.settings.guideStyle.hint"),
-    scope: "client",
+    scope: PER_USER_SCOPE,
     config: true,
     type: String,
     default: "dashed",
@@ -335,7 +339,7 @@ Hooks.once("init", () => {
     game.settings.register(MODULE_ID, k, {
       name: game.i18n.localize(`pixie-border.settings.${k}.name`),
       hint: game.i18n.localize(`pixie-border.settings.${k}.hint`),
-      scope: "client",
+      scope: PER_USER_SCOPE,
       config: false,
       type: new colorField({ initial: COLOR_DEFAULTS[k] })
     });
@@ -345,7 +349,7 @@ Hooks.once("init", () => {
     game.settings.register(MODULE_ID, k, {
       name: game.i18n.localize(`pixie-border.settings.${k}.name`),
       hint: game.i18n.localize(`pixie-border.settings.${k}.hint`),
-      scope: "client",
+      scope: PER_USER_SCOPE,
       config: false,
       type: new colorField({ initial: COLOR_DEFAULTS[k] })
     });
@@ -355,7 +359,7 @@ Hooks.once("init", () => {
     game.settings.register(MODULE_ID, k, {
       name: game.i18n.localize(`pixie-border.settings.${k}.name`),
       hint: game.i18n.localize(`pixie-border.settings.${k}.hint`),
-      scope: "client",
+      scope: PER_USER_SCOPE,
       config: false,
       type: new colorField({ initial: COLOR_DEFAULTS[k] })
     });
@@ -366,7 +370,7 @@ Hooks.once("init", () => {
     game.settings.register(MODULE_ID, k, {
       name: game.i18n.localize(`pixie-border.settings.${k}.name`),
       hint: game.i18n.localize(`pixie-border.settings.${k}.hint`),
-      scope: "client",
+      scope: PER_USER_SCOPE,
       config: false,
       type: new colorField({ initial: COLOR_DEFAULTS[k] })
     });
