@@ -2,11 +2,11 @@
   "pixie-border": {
     "settings": {
       "foundryBorder": {
-        "name": "Foundry Border",
+        "name": "Foundry Border Behavior",
         "hint": "Set the behavior of the Default Foundry Border.",
         "choices": {
-          "disabled": "Disable",
-          "enabled": "Enable",
+          "disabled": "Disabled",
+          "enabled": "Enabled",
           "hover": "Hover Only"
         }
       },
