@@ -193,6 +193,7 @@ Hooks.once("init", () => {
     scope: "client",
     config: true,
     type: String,
+    requiresReload: true,
     default: "disabled",
     choices: {
       disabled: game.i18n.localize("pixie-border.settings.foundryBorder.choices.disabled"),
@@ -323,3 +324,4 @@ Hooks.once("init", () => {
     });
   }
 });
+
