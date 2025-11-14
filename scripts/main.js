@@ -6,15 +6,27 @@ const HOVER_KEY   = "_pixiHover";
 const TARGET_KEY  = "_pixiTarget";
 const GLOW_KEY    = "_pixiGlowFilter";
 const COMBAT_KEY  = "_pixiCombatActive";   // marks active combatant
+const GUIDED_KEY  = "_pixiGuidedBorder";   // custom guided hover border
 
 // Hardcoded PIXI settings
 const OUTLINE_QUALITY = 1;
 const OUTLINE_PADDING = 0;
 
+// Guided border defaults (settings may override color/opacity/style)
+const GUIDED_COLOR   = 0x888888; // default grey fallback
+const GUIDED_WIDTH   = 3;        // px
+const GUIDED_PADDING = 4;        // extra padding around token
+const GUIDED_DASH    = 8;        // dash length for dashed style
+const GUIDED_GAP     = 4;        // gap length for dashed style
+
 // Log helper
 const LOG = "[pixie-border]";
 const _onceSet = new Set();
-const logOnce = (k, level, ...msg) => { if (_onceSet.has(k)) return; _onceSet.add(k); (console[level]||console.log)(LOG, ...msg); };
+const logOnce = (k, level, ...msg) => {
+  if (_onceSet.has(k)) return;
+  _onceSet.add(k);
+  (console[level] || console.log)(LOG, ...msg);
+};
 
 /* =================================================================================
  * Settings helpers
@@ -40,11 +52,33 @@ function getCondHigh() { return game.settings.get(MODULE_ID, "conditionHighColor
 function getCondMid()  { return game.settings.get(MODULE_ID, "conditionMidColor"); }
 function getCondLow()  { return game.settings.get(MODULE_ID, "conditionLowColor"); }
 
+// Guided border settings
+function getGuideColor() {
+  return game.settings.get(MODULE_ID, "guideColor");
+}
+function getGuideOpacity() {
+  let o = Number(game.settings.get(MODULE_ID, "guideOpacity"));
+  if (!Number.isFinite(o)) o = 75;      // fallback to 75%
+  o = o / 100;                          // convert to 0–1
+  return Math.min(1, Math.max(0.25, o));
+}
+function getGuideStyle() {
+  const v = game.settings.get(MODULE_ID, "guideStyle");
+  if (v === "solid" || v === "dotted" || v === "dashed") return v;
+  return "dashed";
+}
+
 // Toggles
 function getDisableOutline()      { return !!game.settings.get(MODULE_ID, "disableOutline"); }
 function getDisableGlow()         { return !!game.settings.get(MODULE_ID, "disableGlow"); }
 function getEnableTarget()        { return !!game.settings.get(MODULE_ID, "enableTarget"); }
-function getHideDefault()         { return !!game.settings.get(MODULE_ID, "hideDefaultBorder"); }
+function getFoundryBorderMode() {
+  const v = game.settings.get(MODULE_ID, "foundryBorder");
+  // Backwards compat: if old value "hover" exists, treat it as "guided"
+  if (v === "hover") return "guided";
+  if (v === "enabled" || v === "guided" || v === "disabled") return v;
+  return "disabled";
+}
 function getHideIndicator()       { return !!game.settings.get(MODULE_ID, "hideTargetIndicator"); }
 function getEnableCombatBorder()  { return !!game.settings.get(MODULE_ID, "enableCombatBorder"); }
 
@@ -72,7 +106,7 @@ function getGlowOuterStrength() {
   return Math.min(10, Math.max(0, s));
 }
 
-// Convert CSS color to integer
+// Convert CSS color or similar to integer
 function cssToInt(color) {
   if (typeof color === "string") {
     if (foundry?.utils?.colorStringToHex) {
@@ -285,6 +319,120 @@ function removeGlow(token) {
 }
 
 /* =================================================================================
+ * Guided hover border (custom dashed / dotted / solid rectangle)
+ * ================================================================================= */
+
+function removeGuidedBorder(token) {
+  const g = token?.[GUIDED_KEY];
+  if (!g) return;
+  try {
+    if (g.parent) g.parent.removeChild(g);
+    g.destroy?.({ children: true });
+  } catch {}
+  delete token[GUIDED_KEY];
+}
+
+// Draw dashed rectangle around token bounds
+function drawDashedRect(g, x, y, w, h, dash, gap) {
+  const totalH = dash + gap;
+  // Top
+  for (let i = 0; i < w; i += totalH) {
+    const x1 = x + i;
+    const x2 = Math.min(x + i + dash, x + w);
+    g.moveTo(x1, y);
+    g.lineTo(x2, y);
+  }
+  // Bottom
+  for (let i = 0; i < w; i += totalH) {
+    const x1 = x + i;
+    const x2 = Math.min(x + i + dash, x + w);
+    g.moveTo(x1, y + h);
+    g.lineTo(x2, y + h);
+  }
+  // Left
+  for (let i = 0; i < h; i += totalH) {
+    const y1 = y + i;
+    const y2 = Math.min(y + i + dash, y + h);
+    g.moveTo(x, y1);
+    g.lineTo(x, y2);
+  }
+  // Right
+  for (let i = 0; i < h; i += totalH) {
+    const y1 = y + i;
+    const y2 = Math.min(y + i + dash, y + h);
+    g.moveTo(x + w, y1);
+    g.lineTo(x + w, y2);
+  }
+}
+
+function applyGuidedBorder(token) {
+  if (!token || token.destroyed) return;
+  const mode = getFoundryBorderMode();
+  if (mode !== "guided") {
+    removeGuidedBorder(token);
+    return;
+  }
+
+  // Only on hover, never while controlled
+  const isControlled = !!token.controlled;
+  const isHovered    = !!token[HOVER_KEY] || !!token.hover;
+  if (!isHovered || isControlled) {
+    removeGuidedBorder(token);
+    return;
+  }
+
+  // Create or reuse graphics
+  let g = token[GUIDED_KEY];
+  if (!g || g.destroyed) {
+    g = new PIXI.Graphics();
+    g.zIndex = 1000; // above most things
+    token[GUIDED_KEY] = g;
+    token.addChild(g);
+    token.sortChildren?.();
+  }
+
+  const pad = GUIDED_PADDING;
+  const w = token.w + pad * 2;
+  const h = token.h + pad * 2;
+
+  // Token's display origin is typically (0,0) at top-left, so offset by -pad.
+  const x = -pad;
+  const y = -pad;
+
+  // Resolve color & opacity from settings
+  let raw = getGuideColor?.();
+  let hexStr;
+  try {
+    if (raw instanceof foundry.utils.Color) {
+      hexStr = raw.toString(16, "#");
+    } else {
+      hexStr = String(raw ?? "#888888");
+    }
+  } catch {
+    hexStr = "#888888";
+  }
+  const colorInt = cssToInt(hexStr);
+  const alpha    = getGuideOpacity();
+  const style    = getGuideStyle();
+
+  g.clear();
+  g.lineStyle(GUIDED_WIDTH, colorInt || GUIDED_COLOR, alpha);
+
+  if (style === "solid") {
+    // Simple solid rectangle
+    g.drawRect(x, y, w, h);
+  } else if (style === "dotted") {
+    // Smaller dash for dotted look
+    const dotDash = 2;
+    const dotGap  = 4;
+    drawDashedRect(g, x, y, w, h, dotDash, dotGap);
+  } else {
+    // "dashed" or fallback
+    drawDashedRect(g, x, y, w, h, GUIDED_DASH, GUIDED_GAP);
+  }
+}
+
+/* =================================================================================
  * Combat highlighting (active turn flicker — smooth alpha pulse)
  * ================================================================================= */
 
@@ -455,8 +603,41 @@ function hideNativeBorder(token) {
   b.alpha = 0;
   if (typeof b.clear === "function") b.clear();
 }
+
+/**
+ * Restore the border so Foundry can drive it again in "enabled" mode:
+ * - renderable: true
+ * - alpha: > 0
+ * - DO NOT touch `visible` so Foundry can hide/show on hover/selection.
+ */
+function restoreNativeBorderForFoundry(token) {
+  const b = token?.border;
+  if (!b) return;
+  b.renderable = true;
+  if (b.alpha === 0) b.alpha = 1;
+}
+
+/**
+ * Apply native border visibility according to the foundryBorder mode:
+ * - "disabled": always hide the default Foundry border
+ * - "enabled":  let Foundry behave normally (hover + selection),
+ *               we only make sure it's not permanently hidden
+ * - "guided":   same as disabled; we replace it with our own guided border
+ */
 function applyNativeBorderVisibility(token) {
-  if (getHideDefault()) hideNativeBorder(token);
+  const mode = getFoundryBorderMode();
+  const b = token?.border;
+  if (!b) return;
+
+  if (mode === "disabled" || mode === "guided") {
+    hideNativeBorder(token);
+    return;
+  }
+
+  if (mode === "enabled") {
+    restoreNativeBorderForFoundry(token);
+    return;
+  }
 }
 
 function hideNativeIndicator(token) {
@@ -503,6 +684,13 @@ function refreshToken(token) {
     removeGlow(token);
   }
 
+  // Guided border (independent of outline/glow)
+  if (getFoundryBorderMode() === "guided") {
+    applyGuidedBorder(token);
+  } else {
+    removeGuidedBorder(token);
+  }
+
   applyNativeBorderVisibility(token);
   applyNativeTargetVisibility(token);
 }
@@ -519,7 +707,7 @@ Hooks.on("canvasReady", () => {
 
   logOnce("ready", "info", "ready — tokens:", canvas.tokens?.placeables?.length ?? 0);
 
-  // Hover → show outline/glow (and sync native vis)
+  // Hover → show outline/glow (and sync native vis + guided)
   Handlers.hover = Hooks.on("hoverToken", (token, hovered) => {
     token[HOVER_KEY] = hovered;
     refreshToken(token);
@@ -556,12 +744,15 @@ Hooks.on("canvasReady", () => {
   Handlers.updateSetting = Hooks.on("updateSetting", (setting) => {
     if (!setting?.key?.startsWith?.(`${MODULE_ID}.`)) return;
 
-    // Native visibility toggles apply immediately
-    if (setting.key === `${MODULE_ID}.hideDefaultBorder` ||
+    // Native visibility toggles / foundry border mode apply immediately
+    if (setting.key === `${MODULE_ID}.foundryBorder` ||
         setting.key === `${MODULE_ID}.hideTargetIndicator`) {
       for (const t of canvas.tokens?.placeables ?? []) {
         applyNativeBorderVisibility(t);
         applyNativeTargetVisibility(t);
+        // Guided mode depends on this too
+        if (getFoundryBorderMode() === "guided") applyGuidedBorder(t);
+        else removeGuidedBorder(t);
       }
       return;
     }
@@ -579,7 +770,7 @@ Hooks.on("canvasReady", () => {
       CombatFX.dir   = -1;
     }
 
-    // For mode, enableTarget, and any color changes, just refresh
+    // For mode, enableTarget, and any color changes (including guide*)
     for (const t of canvas.tokens?.placeables ?? []) {
       if (setting.key === `${MODULE_ID}.enableTarget`) {
         t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
@@ -592,6 +783,7 @@ Hooks.on("canvasReady", () => {
   Handlers.refreshToken = Hooks.on("refreshToken", (token) => {
     applyNativeBorderVisibility(token);
     applyNativeTargetVisibility(token);
+    if (getFoundryBorderMode() === "guided") applyGuidedBorder(token);
   });
 
   // Clean up on token deletion
@@ -600,6 +792,7 @@ Hooks.on("canvasReady", () => {
     if (t) {
       removeGlow(t);
       removeOutline(t);
+      removeGuidedBorder(t);
       if (CombatFX.token && CombatFX.token === t) {
         setCombatToken(null);
       }
@@ -662,9 +855,14 @@ Hooks.once("shutdown", () => {
   clearCombatInterval();
   setCombatToken(null);
 
-  for (const t of canvas.tokens?.placeables ?? []) { removeGlow(t); removeOutline(t); }
+  for (const t of canvas.tokens?.placeables ?? []) {
+    removeGlow(t);
+    removeOutline(t);
+    removeGuidedBorder(t);
+  }
   Object.keys(Handlers).forEach(k => delete Handlers[k]);
   Handlers._installed = false;
 
   logOnce("shutdown", "info", "shutdown — handlers removed");
 });
+

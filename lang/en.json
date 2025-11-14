@@ -1,10 +1,16 @@
 {
   "pixie-border": {
     "settings": {
-      "hideDefaultBorder": {
-        "name": "Hide Default Foundry Border",
-        "hint": "Remove Foundry’s built-in selection border on tokens."
+      "foundryBorder": {
+        "name": "Foundry Border Behavior",
+        "hint": "Determines how the default Foundry border should behave.",
+        "choices": {
+          "disabled": "Disabled",
+          "enabled": "Enabled",
+          "guided": "Guided"
+        }
       },
+
       "hideTargetIndicator": {
         "name": "Hide Foundry Target Indicator",
         "hint": "Remove Foundry’s default targeting indicator."
@@ -14,6 +20,7 @@
         "name": "Enable Target Border",
         "hint": "Also show the outline and glow on tokens you target."
       },
+
       "enableCombatBorder": {
         "name": "Enable Combat Border",
         "hint": "Show an animated border for the active combatant."
@@ -23,6 +30,7 @@
         "name": "Disable Outline Filter",
         "hint": "Turn this on to completely disable the outline filter."
       },
+
       "disableGlow": {
         "name": "Disable Glow Filter",
         "hint": "Turn this on to completely disable the glow filter."
@@ -37,10 +45,12 @@
         "name": "Outline Thickness",
         "hint": "Width of the outline in pixels."
       },
+
       "glowDistance": {
         "name": "Glow Distance",
         "hint": "Glow radius in pixels. Larger values expand the glow outward."
       },
+
       "glowOuterStrength": {
         "name": "Glow Strength",
         "hint": "Intensity of the outer glow. Higher values are brighter."
@@ -68,7 +78,8 @@
       "colorSections": {
         "core": "Custom Colors",
         "disposition": "Disposition Colors",
-        "condition": "Condition Colors"
+        "condition": "Condition Colors",
+        "guided": "Guided Border"
       },
 
       "outlineColor": {
@@ -116,6 +127,26 @@
       "conditionLowColor": {
         "name": "Low HP Color",
         "hint": "Used when the token is at low health."
+      },
+
+      "guideColor": {
+        "name": "Guided Border Color",
+        "hint": "Sets the color of the guided hover border when Foundry Border behavior is set to Guided."
+      },
+
+      "guideOpacity": {
+        "name": "Guided Border Opacity",
+        "hint": "Adjusts the transparency of the guided hover border."
+      },
+
+      "guideStyle": {
+        "name": "Guided Border Style",
+        "hint": "Choose the line style for the guided hover border.",
+        "choices": {
+          "dashed": "Dashed",
+          "dotted": "Dotted",
+          "solid": "Solid"
+        }
       }
     },
 
