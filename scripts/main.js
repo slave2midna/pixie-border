@@ -464,13 +464,21 @@ function hideNativeBorder(token) {
  * Restore the border so Foundry can drive it again:
  * - renderable: true
  * - alpha: > 0
- * - DO NOT force `visible` here in enabled mode, so Foundry can hide/show.
+ * - In "hover" mode, also set `visible` based on hover/controlled state.
  */
 function restoreNativeBorderForFoundry(token) {
   const b = token?.border;
   if (!b) return;
+
   b.renderable = true;
   if (b.alpha === 0) b.alpha = 1;
+
+  const mode = getFoundryBorderMode();
+  if (mode === "hover") {
+    const isControlled = !!token.controlled;
+    const isHovered    = !!token[HOVER_KEY] || !!token.hover;
+    b.visible = !isControlled && isHovered;
+  }
 }
 
 /**
@@ -478,7 +486,7 @@ function restoreNativeBorderForFoundry(token) {
  * - "disabled": always hide the default Foundry border
  * - "enabled":  let Foundry behave normally (hover + selection),
  *               we only make sure it's not permanently hidden
- * - "hover":    show only while hovered and not controlled; hide otherwise
+ * - "hover":    let Foundry handle hover, but hide border when controlled
  */
 function applyNativeBorderVisibility(token) {
   const mode = getFoundryBorderMode();
@@ -496,22 +504,17 @@ function applyNativeBorderVisibility(token) {
     return;
   }
 
-  // Hover-only mode
+  // Hover-only mode:
+  // - if the token is controlled (selected), hide the default border
+  // - if not controlled, restore and let restoreNativeBorderForFoundry
+  //   decide visibility based on hover state
   if (mode === "hover") {
     const isControlled = !!token.controlled;
-    const isHovered    = !!token[HOVER_KEY] || !!token.hover;
 
     if (isControlled) {
-      // Token is selected → we don't want the default Foundry border at all
       hideNativeBorder(token);
-    } else if (isHovered) {
-      // Not selected & hovered → force border visible
-      b.renderable = true;
-      b.visible    = true;
-      if (b.alpha === 0) b.alpha = 1;
     } else {
-      // Not selected, not hovered → hide border
-      hideNativeBorder(token);
+      restoreNativeBorderForFoundry(token);
     }
   }
 }
