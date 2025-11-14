@@ -12,12 +12,11 @@ const GUIDED_KEY  = "_pixiGuidedBorder";
 const OUTLINE_QUALITY = 1;
 const OUTLINE_PADDING = 0;
 
-// Guided border defaults
-const GUIDED_COLOR   = 0x888888;
-const GUIDED_WIDTH   = 3;
-const GUIDED_PADDING = 4;
-const GUIDED_DASH    = 8;
-const GUIDED_GAP     = 4;
+// Hardcoded Guide settings
+const GUIDE_WIDTH   = 3;
+const GUIDE_PADDING = 4;
+const GUIDE_DASH    = 8;
+const GUIDE_GAP     = 4;
 
 // Log helper
 const LOG = "[pixie-border]";
@@ -74,7 +73,6 @@ function getDisableGlow()         { return !!game.settings.get(MODULE_ID, "disab
 function getEnableTarget()        { return !!game.settings.get(MODULE_ID, "enableTarget"); }
 function getFoundryBorderMode() {
   const v = game.settings.get(MODULE_ID, "foundryBorder");
-  if (v === "hover") return "guided";
   if (v === "enabled" || v === "guided" || v === "disabled") return v;
   return "disabled";
 }
@@ -146,7 +144,7 @@ function dispositionColorInt(token) {
   const raw = cfg?.[disp] ?? cfg?.[String(disp)];
   if (raw != null) return cssToInt(String(raw));
 
-  return DISP_MAP[disp] ?? 0xffffff;   // Fallback, to be removed.
+  return DISP_MAP[disp] ?? 0xffffff;
 }
 
 // Condition Color Resolver
@@ -387,7 +385,7 @@ function applyGuidedBorder(token) {
     token.sortChildren?.();
   }
 
-  const pad = GUIDED_PADDING;
+  const pad = GUIDE_PADDING;
   const w = token.w + pad * 2;
   const h = token.h + pad * 2;
 
@@ -424,7 +422,7 @@ function applyGuidedBorder(token) {
     drawDashedRect(g, x, y, w, h, dotDash, dotGap);
   } else {
     // "dashed" or fallback
-    drawDashedRect(g, x, y, w, h, GUIDED_DASH, GUIDED_GAP);
+    drawDashedRect(g, x, y, w, h, GUIDE_DASH, GUIDE_GAP);
   }
 }
 
@@ -855,3 +853,4 @@ Hooks.once("shutdown", () => {
 
   logOnce("shutdown", "info", "shutdown — handlers removed");
 });
+
