@@ -3,7 +3,7 @@
     "settings": {
       "foundryBorder": {
         "name": "Foundry Border Behavior",
-        "hint": "Set the behavior of the Default Foundry Border.",
+        "hint": "Determines the default Foundry Border should behave.",
         "choices": {
           "disabled": "Disabled",
           "enabled": "Enabled",
