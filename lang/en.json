@@ -3,7 +3,7 @@
     "settings": {
       "foundryBorder": {
         "name": "Foundry Border Behavior",
-        "hint": "Determines the default Foundry Border should behave.",
+        "hint": "Determines how the default Foundry border should behave.",
         "choices": {
           "disabled": "Disabled",
           "enabled": "Enabled",
@@ -78,7 +78,8 @@
       "colorSections": {
         "core": "Custom Colors",
         "disposition": "Disposition Colors",
-        "condition": "Condition Colors"
+        "condition": "Condition Colors",
+        "guided": "Guided Border"
       },
 
       "outlineColor": {
@@ -126,6 +127,26 @@
       "conditionLowColor": {
         "name": "Low HP Color",
         "hint": "Used when the token is at low health."
+      },
+
+      "guideColor": {
+        "name": "Guided Border Color",
+        "hint": "Sets the color of the guided hover border when Foundry Border behavior is set to Guided."
+      },
+
+      "guideOpacity": {
+        "name": "Guided Border Opacity",
+        "hint": "Adjusts the transparency of the guided hover border."
+      },
+
+      "guideStyle": {
+        "name": "Guided Border Style",
+        "hint": "Choose the line style for the guided hover border.",
+        "choices": {
+          "dashed": "Dashed",
+          "dotted": "Dotted",
+          "solid": "Solid"
+        }
       }
     },
 
