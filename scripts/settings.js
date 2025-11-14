@@ -23,12 +23,12 @@ const COND_KEYS = [
   "conditionMidColor",
   "conditionLowColor"
 ];
-// Guided color key
-const GUIDED_KEYS = [
+// Guide color key
+const GUIDE_KEYS = [
   "guideColor"
 ];
 
-const ALL_COLOR_KEYS = [...CORE_KEYS, ...DISP_KEYS, ...COND_KEYS, ...GUIDED_KEYS];
+const ALL_COLOR_KEYS = [...CORE_KEYS, ...DISP_KEYS, ...COND_KEYS, ...GUIDE_KEYS];
 
 // Color defaults
 const COLOR_DEFAULTS = {
@@ -44,7 +44,7 @@ const COLOR_DEFAULTS = {
   conditionMidColor: "#f1c40f",
   conditionLowColor: "#e74c3c",
 
-  // Guided border default color
+  // Guide border default color
   guideColor: "#888888"
 };
 
@@ -103,7 +103,7 @@ class PixieBorderColorConfig extends FormApplication {
       conditionMidColor: g("conditionMidColor"),
       conditionLowColor: g("conditionLowColor"),
 
-      // Guided
+      // Guide
       guideColor: g("guideColor")
     };
   }
@@ -306,7 +306,7 @@ Hooks.once("init", () => {
     range: { min: 0, max: 10, step: 0.5 }
   });
 
-  // Guided border opacity (25–100%)
+  // Guide border opacity (25–100%)
   game.settings.register(MODULE_ID, "guideOpacity", {
     name: game.i18n.localize("pixie-border.settings.guideOpacity.name"),
     hint: game.i18n.localize("pixie-border.settings.guideOpacity.hint"),
@@ -317,7 +317,7 @@ Hooks.once("init", () => {
     range: { min: 25, max: 100, step: 5 }
   });
 
-  // Guided border style (Dashed / Dotted / Solid)
+  // Guide border style (Dashed / Dotted / Solid)
   game.settings.register(MODULE_ID, "guideStyle", {
     name: game.i18n.localize("pixie-border.settings.guideStyle.name"),
     hint: game.i18n.localize("pixie-border.settings.guideStyle.hint"),
@@ -365,8 +365,8 @@ Hooks.once("init", () => {
     });
   }
 
-  // Guided color fields
-  for (const k of GUIDED_KEYS) {
+  // Guide color fields
+  for (const k of GUIDE_KEYS) {
     game.settings.register(MODULE_ID, k, {
       name: game.i18n.localize(`pixie-border.settings.${k}.name`),
       hint: game.i18n.localize(`pixie-border.settings.${k}.hint`),
@@ -376,4 +376,5 @@ Hooks.once("init", () => {
     });
   }
 });
+
 
