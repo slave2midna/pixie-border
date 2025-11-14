@@ -186,14 +186,19 @@ Hooks.once("init", () => {
   });
 
   // --- Visibility & toggles --------------------------------------------
-  game.settings.register(MODULE_ID, "hideDefaultBorder", {
-    name: game.i18n.localize("pixie-border.settings.hideDefaultBorder.name"),
-    hint: game.i18n.localize("pixie-border.settings.hideDefaultBorder.hint"),
+
+  game.settings.register(MODULE_ID, "foundryBorder", {
+    name: game.i18n.localize("pixie-border.settings.foundryBorder.name"),
+    hint: game.i18n.localize("pixie-border.settings.foundryBorder.hint"),
     scope: "client",
     config: true,
-    type: Boolean,
-    default: true,
-    requiresReload: true
+    type: String,
+    default: "disabled",
+    choices: {
+      disabled: game.i18n.localize("pixie-border.settings.foundryBorder.choices.disabled"),
+      enabled: game.i18n.localize("pixie-border.settings.foundryBorder.choices.enabled"),
+      hover: game.i18n.localize("pixie-border.settings.foundryBorder.choices.hover")
+    }
   });
 
   game.settings.register(MODULE_ID, "hideTargetIndicator", {
@@ -215,7 +220,7 @@ Hooks.once("init", () => {
     default: false
   });
 
-  // Placeholder for combat border toggle
+  // Combat border toggle
   game.settings.register(MODULE_ID, "enableCombatBorder", {
     name: game.i18n.localize("pixie-border.settings.enableCombatBorder.name"),
     hint: game.i18n.localize("pixie-border.settings.enableCombatBorder.hint"),
@@ -243,7 +248,7 @@ Hooks.once("init", () => {
     default: false
   });
 
-  // Placeholder for combat border speed (1–3)
+  // Combat border speed (1–3)
   game.settings.register(MODULE_ID, "combatBorderSpeed", {
     name: game.i18n.localize("pixie-border.settings.combatBorderSpeed.name"),
     hint: game.i18n.localize("pixie-border.settings.combatBorderSpeed.hint"),
@@ -318,5 +323,3 @@ Hooks.once("init", () => {
     });
   }
 });
-
-
