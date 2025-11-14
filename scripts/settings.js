@@ -209,11 +209,11 @@ Hooks.once("init", () => {
     config: true,
     type: String,
     requiresReload: true,
-    default: "disabled",
+    default: "disable",
     choices: {
-      disabled: game.i18n.localize("pixie-border.settings.foundryBorder.choices.disabled"),
-      enabled: game.i18n.localize("pixie-border.settings.foundryBorder.choices.enabled"),
-      guided: game.i18n.localize("pixie-border.settings.foundryBorder.choices.guided")
+      disable: game.i18n.localize("pixie-border.settings.foundryBorder.choices.disable"),
+      enable: game.i18n.localize("pixie-border.settings.foundryBorder.choices.enable"),
+      guide: game.i18n.localize("pixie-border.settings.foundryBorder.choices.guide")
     }
   });
 
@@ -376,3 +376,4 @@ Hooks.once("init", () => {
     });
   }
 });
+
