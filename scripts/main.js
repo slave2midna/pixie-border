@@ -6,7 +6,7 @@ const HOVER_KEY   = "_pixiHover";
 const TARGET_KEY  = "_pixiTarget";
 const GLOW_KEY    = "_pixiGlowFilter";
 const COMBAT_KEY  = "_pixiCombatActive";
-const GUIDED_KEY  = "_pixiGuidedBorder";
+const GUIDE_KEY  = "_pixiGuidedBorder";
 
 // Hardcoded PIXI settings
 const OUTLINE_QUALITY = 1;
@@ -317,13 +317,13 @@ function removeGlow(token) {
  * ================================================================================= */
 
 function removeGuidedBorder(token) {
-  const g = token?.[GUIDED_KEY];
+  const g = token?.[GUIDE_KEY];
   if (!g) return;
   try {
     if (g.parent) g.parent.removeChild(g);
     g.destroy?.({ children: true });
   } catch {}
-  delete token[GUIDED_KEY];
+  delete token[GUIDE_KEY];
 }
 
 // Draw dashed rectangle around token bounds
@@ -376,11 +376,11 @@ function applyGuidedBorder(token) {
   }
 
   // Create or reuse graphics
-  let g = token[GUIDED_KEY];
+  let g = token[GUIDE_KEY];
   if (!g || g.destroyed) {
     g = new PIXI.Graphics();
     g.zIndex = 1000; // above most things, change if needed.
-    token[GUIDED_KEY] = g;
+    token[GUIDE_KEY] = g;
     token.addChild(g);
     token.sortChildren?.();
   }
@@ -410,7 +410,7 @@ function applyGuidedBorder(token) {
   const style    = getGuideStyle();
 
   g.clear();
-  g.lineStyle(GUIDED_WIDTH, colorInt || GUIDED_COLOR, alpha);
+  g.lineStyle(GUIDE_WIDTH, colorInt, alpha);
 
   if (style === "solid") {
     // Simple solid rectangle
@@ -853,4 +853,5 @@ Hooks.once("shutdown", () => {
 
   logOnce("shutdown", "info", "shutdown — handlers removed");
 });
+
 
