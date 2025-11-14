@@ -58,7 +58,8 @@ function getGuideColor() {
 }
 function getGuideOpacity() {
   let o = Number(game.settings.get(MODULE_ID, "guideOpacity"));
-  if (!Number.isFinite(o)) o = 0.75;
+  if (!Number.isFinite(o)) o = 75;      // fallback to 75%
+  o = o / 100;                          // convert to 0–1
   return Math.min(1, Math.max(0.25, o));
 }
 function getGuideStyle() {
@@ -864,3 +865,4 @@ Hooks.once("shutdown", () => {
 
   logOnce("shutdown", "info", "shutdown — handlers removed");
 });
+
