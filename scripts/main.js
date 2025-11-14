@@ -460,18 +460,24 @@ function hideNativeBorder(token) {
   if (typeof b.clear === "function") b.clear();
 }
 
-function showNativeBorder(token) {
+/**
+ * Restore the border so Foundry can drive it again:
+ * - renderable: true
+ * - alpha: > 0
+ * - DO NOT force `visible` here, so Foundry can hide/show on hover/selection.
+ */
+function restoreNativeBorderForFoundry(token) {
   const b = token?.border;
   if (!b) return;
   b.renderable = true;
-  b.visible = true;
   if (b.alpha === 0) b.alpha = 1;
 }
 
 /**
  * Apply native border visibility according to the foundryBorder mode:
  * - "disabled": always hide the default Foundry border
- * - "enabled":  always allow it (Foundry handles hover/selection)
+ * - "enabled":  let Foundry behave normally (hover + selection),
+ *               we only make sure it's not permanently hidden
  * - "hover":    show only while hovered and not controlled
  */
 function applyNativeBorderVisibility(token) {
@@ -485,16 +491,24 @@ function applyNativeBorderVisibility(token) {
   }
 
   if (mode === "enabled") {
-    // Let Foundry handle when to draw; just ensure it's not forcibly hidden
-    showNativeBorder(token);
+    // Only un-hide if we previously forced it off; let Foundry manage visible.
+    restoreNativeBorderForFoundry(token);
     return;
   }
 
   // Hover-only mode
   if (mode === "hover") {
-    const shouldShow = !!token.hover && !token.controlled;
+    const isHovered    = !!token[HOVER_KEY] || !!token.hover;
+    const isControlled = !!token.controlled;
+    const shouldShow   = isHovered && !isControlled;
+
     if (shouldShow) {
-      showNativeBorder(token);
+      // Here we *do* control visibility because we want custom behavior
+      const b2 = token.border;
+      if (!b2) return;
+      b2.renderable = true;
+      b2.visible    = true;
+      if (b2.alpha === 0) b2.alpha = 1;
     } else {
       hideNativeBorder(token);
     }
