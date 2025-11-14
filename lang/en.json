@@ -7,7 +7,7 @@
         "choices": {
           "disabled": "Disabled",
           "enabled": "Enabled",
-          "hover": "Hover Only"
+          "guided": "Guided"
         }
       },
 
