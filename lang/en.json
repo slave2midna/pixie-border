@@ -3,11 +3,11 @@
     "settings": {
       "foundryBorder": {
         "name": "Foundry Border Behavior",
-        "hint": "Determines how the default Foundry border should behave.",
+        "hint": "Set how the default foundry square border should behave.",
         "choices": {
-          "disabled": "Disabled",
-          "enabled": "Enabled",
-          "guided": "Guided"
+          "disable": "Disable",
+          "enable": "Enable",
+          "guide": "Guide"
         }
       },
 
