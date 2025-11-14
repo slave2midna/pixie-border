@@ -419,6 +419,12 @@ function updateCombatTokenFromCombat(combat) {
     return;
   }
 
+  // If the combat exists but hasn't started (or has been reset), treat as no combat
+  if (combat.started === false) {
+    setCombatToken(null);
+    return;
+  }
+
   // Only care if this combat is on our current scene
   const sceneId = combat.scene?.id ?? combat.sceneId;
   if (sceneId && canvas.scene && sceneId !== canvas.scene.id) {
@@ -615,6 +621,16 @@ Hooks.on("canvasReady", () => {
     updateCombatTokenFromCombat(combat);
   });
 
+  // Combat end → clear combat border completely
+  Handlers.combatEnd = Hooks.on("combatEnd", (combat, options, userId) => {
+    setCombatToken(null);
+  });
+
+  // Combat deleted → also clear combat border
+  Handlers.deleteCombat = Hooks.on("deleteCombat", (combat, options, userId) => {
+    setCombatToken(null);
+  });
+
   // Initial pass across my scene tokens
   const myTargets = game.user?.targets ?? new Set();
   for (const t of canvas.tokens?.placeables ?? []) {
@@ -640,6 +656,8 @@ Hooks.once("shutdown", () => {
   off("combatStart",  Handlers.combatStart);
   off("combatTurn",   Handlers.combatTurn);
   off("updateCombat", Handlers.updateCombat);
+  off("combatEnd",    Handlers.combatEnd);
+  off("deleteCombat", Handlers.deleteCombat);
 
   clearCombatInterval();
   setCombatToken(null);
