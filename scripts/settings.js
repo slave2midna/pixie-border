@@ -198,7 +198,7 @@ Hooks.once("init", () => {
     choices: {
       disabled: game.i18n.localize("pixie-border.settings.foundryBorder.choices.disabled"),
       enabled: game.i18n.localize("pixie-border.settings.foundryBorder.choices.enabled"),
-      hover: game.i18n.localize("pixie-border.settings.foundryBorder.choices.hover")
+      guided: game.i18n.localize("pixie-border.settings.foundryBorder.choices.guided")
     }
   });
 
@@ -324,4 +324,5 @@ Hooks.once("init", () => {
     });
   }
 });
+
 
