@@ -1,7 +1,7 @@
 const MODULE_ID = "pixie-border";
 const TEMPLATE_PATH = `modules/pixie-border/templates/colorConfig.hbs`;
 
-// Prefer per-user settings in v13+; fall back to client in v12
+// Use per-user settings in v13+; fall back to client in v12
 const PER_USER_SCOPE =
   (globalThis.CONST?.SETTING_SCOPES?.USER) || "client";
 
@@ -23,12 +23,11 @@ const COND_KEYS = [
   "conditionMidColor",
   "conditionLowColor"
 ];
-// Guided color key
-const GUIDED_KEYS = [
+const GUIDE_KEYS = [
   "guideColor"
 ];
 
-const ALL_COLOR_KEYS = [...CORE_KEYS, ...DISP_KEYS, ...COND_KEYS, ...GUIDED_KEYS];
+const ALL_COLOR_KEYS = [...CORE_KEYS, ...DISP_KEYS, ...COND_KEYS, ...GUIDE_KEYS];
 
 // Color defaults
 const COLOR_DEFAULTS = {
@@ -36,30 +35,24 @@ const COLOR_DEFAULTS = {
   targetOutlineColor: "#88ccff",
   glowColor: "#88ccff",
   targetGlowColor: "#88ccff",
+  guideColor: "#888888",
   dispositionHostileColor: "#ff3a3a",
   dispositionFriendlyColor: "#2ecc71",
   dispositionNeutralColor: "#f1c40f",
   dispositionSecretColor: "#9b59b6",
   conditionHighColor: "#2ecc71",
   conditionMidColor: "#f1c40f",
-  conditionLowColor: "#e74c3c",
-
-  // Guided border default color
-  guideColor: "#888888"
+  conditionLowColor: "#e74c3c"
 };
 
 // Normalize color objects to hex string
 function asHexString(v, fallback = "#88ccff") {
   try {
-    // If already a Foundry Color, just stringify
     if (v instanceof foundry.utils.Color) {
       return v.toString(16, "#");
     }
-
-    // Otherwise parse whatever we got
     return foundry.utils.Color.fromString(v ?? fallback).toString(16, "#");
   } catch {
-    // If it's already a plausible hex string, trust it; else fallback
     if (typeof v === "string" && /^#?[0-9a-f]{3,8}$/i.test(v)) {
       return v.startsWith("#") ? v : `#${v}`;
     }
@@ -82,7 +75,7 @@ class PixieBorderColorConfig extends FormApplication {
     });
   }
 
-  // Provide values to the template
+  // Provide values to the color config template
   async getData() {
     const g = (k) => asHexString(game.settings.get(MODULE_ID, k), COLOR_DEFAULTS[k]);
     return {
@@ -91,6 +84,7 @@ class PixieBorderColorConfig extends FormApplication {
       targetOutlineColor: g("targetOutlineColor"),
       glowColor: g("glowColor"),
       targetGlowColor: g("targetGlowColor"),
+      guideColor: g("guideColor"),
 
       // Disposition
       dispositionHostileColor: g("dispositionHostileColor"),
@@ -101,18 +95,15 @@ class PixieBorderColorConfig extends FormApplication {
       // Condition
       conditionHighColor: g("conditionHighColor"),
       conditionMidColor: g("conditionMidColor"),
-      conditionLowColor: g("conditionLowColor"),
-
-      // Guided
-      guideColor: g("guideColor")
+      conditionLowColor: g("conditionLowColor")
     };
   }
 
-  /** Wire up Reset and Cancel + live sync between color/hex inputs */
+  // Color configuration wires
   activateListeners(html) {
     super.activateListeners(html);
 
-    // Reset to defaults
+    // Reset to default
     html.find('[data-action="reset"]').on("click", async () => {
       for (const k of ALL_COLOR_KEYS) {
         const v = COLOR_DEFAULTS[k];
@@ -209,11 +200,11 @@ Hooks.once("init", () => {
     config: true,
     type: String,
     requiresReload: true,
-    default: "disabled",
+    default: "disable",
     choices: {
-      disabled: game.i18n.localize("pixie-border.settings.foundryBorder.choices.disabled"),
-      enabled: game.i18n.localize("pixie-border.settings.foundryBorder.choices.enabled"),
-      guided: game.i18n.localize("pixie-border.settings.foundryBorder.choices.guided")
+      disable: game.i18n.localize("pixie-border.settings.foundryBorder.choices.disable"),
+      enable: game.i18n.localize("pixie-border.settings.foundryBorder.choices.enable"),
+      guide: game.i18n.localize("pixie-border.settings.foundryBorder.choices.guide")
     }
   });
 
@@ -306,7 +297,7 @@ Hooks.once("init", () => {
     range: { min: 0, max: 10, step: 0.5 }
   });
 
-  // Guided border opacity (25–100%)
+  // Guide border opacity (25–100%)
   game.settings.register(MODULE_ID, "guideOpacity", {
     name: game.i18n.localize("pixie-border.settings.guideOpacity.name"),
     hint: game.i18n.localize("pixie-border.settings.guideOpacity.hint"),
@@ -317,7 +308,7 @@ Hooks.once("init", () => {
     range: { min: 25, max: 100, step: 5 }
   });
 
-  // Guided border style (Dashed / Dotted / Solid)
+  // Guide border style (Dashed / Dotted / Solid)
   game.settings.register(MODULE_ID, "guideStyle", {
     name: game.i18n.localize("pixie-border.settings.guideStyle.name"),
     hint: game.i18n.localize("pixie-border.settings.guideStyle.hint"),
@@ -365,8 +356,8 @@ Hooks.once("init", () => {
     });
   }
 
-  // Guided color fields
-  for (const k of GUIDED_KEYS) {
+  // Guide color fields
+  for (const k of GUIDE_KEYS) {
     game.settings.register(MODULE_ID, k, {
       name: game.i18n.localize(`pixie-border.settings.${k}.name`),
       hint: game.i18n.localize(`pixie-border.settings.${k}.hint`),

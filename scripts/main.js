@@ -5,19 +5,18 @@ const OUTLINE_KEY = "_pixiOutlineFilter";
 const HOVER_KEY   = "_pixiHover";
 const TARGET_KEY  = "_pixiTarget";
 const GLOW_KEY    = "_pixiGlowFilter";
-const COMBAT_KEY  = "_pixiCombatActive";   // marks active combatant
-const GUIDED_KEY  = "_pixiGuidedBorder";   // custom guided hover border
+const COMBAT_KEY  = "_pixiCombatActive";
+const GUIDE_KEY  = "_pixiGuideBorder";
 
 // Hardcoded PIXI settings
 const OUTLINE_QUALITY = 1;
 const OUTLINE_PADDING = 0;
 
-// Guided border defaults (settings may override color/opacity/style)
-const GUIDED_COLOR   = 0x888888; // default grey fallback
-const GUIDED_WIDTH   = 3;        // px
-const GUIDED_PADDING = 4;        // extra padding around token
-const GUIDED_DASH    = 8;        // dash length for dashed style
-const GUIDED_GAP     = 4;        // gap length for dashed style
+// Hardcoded Guide settings
+const GUIDE_WIDTH   = 3;
+const GUIDE_PADDING = 4;
+const GUIDE_DASH    = 8;
+const GUIDE_GAP     = 4;
 
 // Log helper
 const LOG = "[pixie-border]";
@@ -35,24 +34,24 @@ const logOnce = (k, level, ...msg) => {
 function getRenderable(token)  { return token?.mesh ?? token?.icon ?? null; }
 function getMode()             { return game.settings.get(MODULE_ID, "mode"); }
 
-// Colors (core) — client scoped
+// Core Colors
 function getOutlineColor()       { return game.settings.get(MODULE_ID, "outlineColor"); }
 function getTargetOutlineColor() { return game.settings.get(MODULE_ID, "targetOutlineColor"); }
 function getGlowColor()          { return game.settings.get(MODULE_ID, "glowColor"); }
 function getTargetGlowColor()    { return game.settings.get(MODULE_ID, "targetGlowColor"); }
 
-// Colors (disposition) — client scoped
+// Disposition Colors
 function getDispHostile()  { return game.settings.get(MODULE_ID, "dispositionHostileColor"); }
 function getDispFriendly() { return game.settings.get(MODULE_ID, "dispositionFriendlyColor"); }
 function getDispNeutral()  { return game.settings.get(MODULE_ID, "dispositionNeutralColor"); }
 function getDispSecret()   { return game.settings.get(MODULE_ID, "dispositionSecretColor"); }
 
-// Colors (condition) — client scoped
+// Condition Colors
 function getCondHigh() { return game.settings.get(MODULE_ID, "conditionHighColor"); }
 function getCondMid()  { return game.settings.get(MODULE_ID, "conditionMidColor"); }
 function getCondLow()  { return game.settings.get(MODULE_ID, "conditionLowColor"); }
 
-// Guided border settings
+// Guide Border Settings
 function getGuideColor() {
   return game.settings.get(MODULE_ID, "guideColor");
 }
@@ -68,28 +67,19 @@ function getGuideStyle() {
   return "dashed";
 }
 
-// Toggles
+// Toggle Settings
 function getDisableOutline()      { return !!game.settings.get(MODULE_ID, "disableOutline"); }
 function getDisableGlow()         { return !!game.settings.get(MODULE_ID, "disableGlow"); }
 function getEnableTarget()        { return !!game.settings.get(MODULE_ID, "enableTarget"); }
 function getFoundryBorderMode() {
   const v = game.settings.get(MODULE_ID, "foundryBorder");
-  // Backwards compat: if old value "hover" exists, treat it as "guided"
-  if (v === "hover") return "guided";
-  if (v === "enabled" || v === "guided" || v === "disabled") return v;
-  return "disabled";
+  if (v === "enable" || v === "guide" || v === "disable") return v;
+  return "disable";
 }
 function getHideIndicator()       { return !!game.settings.get(MODULE_ID, "hideTargetIndicator"); }
 function getEnableCombatBorder()  { return !!game.settings.get(MODULE_ID, "enableCombatBorder"); }
 
-// 1 = slow pulse, 2 = medium pulse, 3 = rapid pulse
-function getCombatBorderSpeed() {
-  let s = Number(game.settings.get(MODULE_ID, "combatBorderSpeed"));
-  if (!Number.isFinite(s)) s = 2;
-  return Math.min(3, Math.max(1, Math.round(s)));
-}
-
-// Numbers
+// Number Settings
 function getThickness() {
   let t = Number(game.settings.get(MODULE_ID, "thickness"));
   if (!Number.isFinite(t)) t = 3;
@@ -104,6 +94,11 @@ function getGlowOuterStrength() {
   let s = Number(game.settings.get(MODULE_ID, "glowOuterStrength"));
   if (!Number.isFinite(s)) s = 4;
   return Math.min(10, Math.max(0, s));
+}
+function getCombatBorderSpeed() {
+  let s = Number(game.settings.get(MODULE_ID, "combatBorderSpeed"));
+  if (!Number.isFinite(s)) s = 2;
+  return Math.min(3, Math.max(1, Math.round(s)));
 }
 
 // Convert CSS color or similar to integer
@@ -126,10 +121,9 @@ function cssToInt(color) {
  * Color resolvers
  * ================================================================================= */
 
-/** Fallback map if both module settings and CONFIG are unavailable */
+// Disposition Color Resolver
 const DISP_MAP = { [-1]:0xe74c3c, [0]:0xf1c40f, [1]:0x2ecc71, [2]:0x3498db, [3]:0x9b59b6 };
 
-/** Resolve disposition color from client settings first, then CONFIG, then fallback */
 function dispositionColorInt(token) {
   const disp = token?.document?.disposition ?? 0;
 
@@ -137,23 +131,21 @@ function dispositionColorInt(token) {
   if (disp === -1) hexStr = String(getDispHostile()  ?? "");
   else if (disp === 0) hexStr = String(getDispNeutral() ?? "");
   else if (disp === 1) hexStr = String(getDispFriendly() ?? "");
-  else if (disp === 3) hexStr = String(getDispSecret()   ?? ""); // hidden/secret
+  else if (disp === 3) hexStr = String(getDispSecret()   ?? "");
 
   if (hexStr && hexStr !== "undefined") {
     const n = cssToInt(hexStr);
     if (n !== 0xffffff || /^#?ffffff$/i.test(hexStr) || /^#?fff$/i.test(hexStr)) return n;
   }
 
-  // Next, Foundry’s configured disposition colors (if present)
   const cfg = CONFIG.Canvas?.dispositionColors ?? CONFIG.Token?.DISPOSITION_COLORS ?? null;
   const raw = cfg?.[disp] ?? cfg?.[String(disp)];
   if (raw != null) return cssToInt(String(raw));
 
-  // Fallback to built-in map
   return DISP_MAP[disp] ?? 0xffffff;
 }
 
-// Condition thresholds
+// Condition Color Resolver
 const HP_HIGH = 0.66;
 const HP_MID  = 0.33;
 
@@ -169,7 +161,7 @@ function getHpPercent(token) {
 
 function conditionColorInt(token) {
   const pct = getHpPercent(token);
-  if (pct == null) return dispositionColorInt(token); // graceful fallback
+  if (pct == null) return dispositionColorInt(token);
   if (pct >= HP_HIGH) return cssToInt(String(getCondHigh() ?? "#2ecc71"));
   if (pct >= HP_MID)  return cssToInt(String(getCondMid()  ?? "#f1c40f"));
   return cssToInt(String(getCondLow() ?? "#e74c3c"));
@@ -319,20 +311,20 @@ function removeGlow(token) {
 }
 
 /* =================================================================================
- * Guided hover border (custom dashed / dotted / solid rectangle)
+ * Guide Border Handler
  * ================================================================================= */
 
-function removeGuidedBorder(token) {
-  const g = token?.[GUIDED_KEY];
+function removeGuideBorder(token) {
+  const g = token?.[GUIDE_KEY];
   if (!g) return;
   try {
     if (g.parent) g.parent.removeChild(g);
     g.destroy?.({ children: true });
   } catch {}
-  delete token[GUIDED_KEY];
+  delete token[GUIDE_KEY];
 }
 
-// Draw dashed rectangle around token bounds
+// Draw Guide Border
 function drawDashedRect(g, x, y, w, h, dash, gap) {
   const totalH = dash + gap;
   // Top
@@ -365,33 +357,30 @@ function drawDashedRect(g, x, y, w, h, dash, gap) {
   }
 }
 
-function applyGuidedBorder(token) {
+// Apply Guide Border logic
+function applyGuideBorder(token) {
   if (!token || token.destroyed) return;
   const mode = getFoundryBorderMode();
-  if (mode !== "guided") {
-    removeGuidedBorder(token);
+  if (mode !== "guide") {
+    removeGuideBorder(token);
     return;
   }
-
-  // Only on hover, never while controlled
   const isControlled = !!token.controlled;
   const isHovered    = !!token[HOVER_KEY] || !!token.hover;
   if (!isHovered || isControlled) {
-    removeGuidedBorder(token);
+    removeGuideBorder(token);
     return;
   }
-
-  // Create or reuse graphics
-  let g = token[GUIDED_KEY];
+  let g = token[GUIDE_KEY];
   if (!g || g.destroyed) {
     g = new PIXI.Graphics();
-    g.zIndex = 1000; // above most things
-    token[GUIDED_KEY] = g;
+    g.zIndex = 1000; // render above most things, change if needed.
+    token[GUIDE_KEY] = g;
     token.addChild(g);
     token.sortChildren?.();
   }
 
-  const pad = GUIDED_PADDING;
+  const pad = GUIDE_PADDING;
   const w = token.w + pad * 2;
   const h = token.h + pad * 2;
 
@@ -416,24 +405,21 @@ function applyGuidedBorder(token) {
   const style    = getGuideStyle();
 
   g.clear();
-  g.lineStyle(GUIDED_WIDTH, colorInt || GUIDED_COLOR, alpha);
+  g.lineStyle(GUIDE_WIDTH, colorInt, alpha);
 
-  if (style === "solid") {
-    // Simple solid rectangle
+  if (style === "solid") {           // Solid border
     g.drawRect(x, y, w, h);
-  } else if (style === "dotted") {
-    // Smaller dash for dotted look
+  } else if (style === "dotted") {   // Dashed border
     const dotDash = 2;
     const dotGap  = 4;
     drawDashedRect(g, x, y, w, h, dotDash, dotGap);
   } else {
-    // "dashed" or fallback
-    drawDashedRect(g, x, y, w, h, GUIDED_DASH, GUIDED_GAP);
+    drawDashedRect(g, x, y, w, h, GUIDE_DASH, GUIDE_GAP);
   }
 }
 
 /* =================================================================================
- * Combat highlighting (active turn flicker — smooth alpha pulse)
+ * Combat highlighting
  * ================================================================================= */
 
 const MIN_COMBAT_ALPHA = 0.25; // lowest visibility
@@ -480,7 +466,6 @@ function setCombatToken(token) {
   // Clear old token
   if (old) {
     old[COMBAT_KEY] = false;
-    // Restore full alpha on old token's filters
     if (old[OUTLINE_KEY]) old[OUTLINE_KEY].alpha = MAX_COMBAT_ALPHA;
     if (old[GLOW_KEY])    old[GLOW_KEY].alpha    = MAX_COMBAT_ALPHA;
     if (!old.destroyed) refreshToken(old);
@@ -493,7 +478,6 @@ function setCombatToken(token) {
 
   if (CombatFX.token && getEnableCombatBorder()) {
     CombatFX.token[COMBAT_KEY] = true;
-    // Ensure outline/glow applied for this token
     refreshToken(CombatFX.token);
     ensureCombatInterval();
   } else {
@@ -504,7 +488,6 @@ function setCombatToken(token) {
 function ensureCombatInterval() {
   if (CombatFX.intervalId != null) return;
 
-  // Fixed interval for smoothness; speed is handled by step size
   const interval = 50; // ~20 FPS
 
   CombatFX.intervalId = window.setInterval(() => {
@@ -519,7 +502,7 @@ function ensureCombatInterval() {
       return;
     }
 
-    // If the token is actively interacted with, pin alpha to full (no flicker)
+    // If the token is actively interacted with, pin alpha to full
     const hoverLike =
       t.controlled ||
       !!t[HOVER_KEY] ||
@@ -546,7 +529,6 @@ function ensureCombatInterval() {
 
     if (outline) outline.alpha = CombatFX.alpha;
     if (glow)    glow.alpha    = CombatFX.alpha;
-    // No need to call refreshToken; PIXI redraws based on alpha change
   }, interval);
 }
 
@@ -605,7 +587,7 @@ function hideNativeBorder(token) {
 }
 
 /**
- * Restore the border so Foundry can drive it again in "enabled" mode:
+ * Restore the border so Foundry can drive it again in "enable" mode:
  * - renderable: true
  * - alpha: > 0
  * - DO NOT touch `visible` so Foundry can hide/show on hover/selection.
@@ -619,22 +601,22 @@ function restoreNativeBorderForFoundry(token) {
 
 /**
  * Apply native border visibility according to the foundryBorder mode:
- * - "disabled": always hide the default Foundry border
- * - "enabled":  let Foundry behave normally (hover + selection),
+ * - "disable": always hide the default Foundry border
+ * - "enable":  let Foundry behave normally (hover + selection),
  *               we only make sure it's not permanently hidden
- * - "guided":   same as disabled; we replace it with our own guided border
+ * - "guide":   same as disable; we replace it with our own guide border
  */
 function applyNativeBorderVisibility(token) {
   const mode = getFoundryBorderMode();
   const b = token?.border;
   if (!b) return;
 
-  if (mode === "disabled" || mode === "guided") {
+  if (mode === "disable" || mode === "guide") {
     hideNativeBorder(token);
     return;
   }
 
-  if (mode === "enabled") {
+  if (mode === "enable") {
     restoreNativeBorderForFoundry(token);
     return;
   }
@@ -663,7 +645,7 @@ function refreshToken(token) {
     token.controlled ||
     !!token[HOVER_KEY] ||
     (getEnableTarget() && !!token[TARGET_KEY]) ||
-    (getEnableCombatBorder() && !!token[COMBAT_KEY]);  // active combatant
+    (getEnableCombatBorder() && !!token[COMBAT_KEY]);
 
   const outlineColor = resolvedOutlineColorInt(token);
   const glowColor    = resolvedGlowColorInt(token);
@@ -684,11 +666,11 @@ function refreshToken(token) {
     removeGlow(token);
   }
 
-  // Guided border (independent of outline/glow)
-  if (getFoundryBorderMode() === "guided") {
-    applyGuidedBorder(token);
+  // Guide border
+  if (getFoundryBorderMode() === "guide") {
+    applyGuideBorder(token);
   } else {
-    removeGuidedBorder(token);
+    removeGuideBorder(token);
   }
 
   applyNativeBorderVisibility(token);
@@ -707,7 +689,7 @@ Hooks.on("canvasReady", () => {
 
   logOnce("ready", "info", "ready — tokens:", canvas.tokens?.placeables?.length ?? 0);
 
-  // Hover → show outline/glow (and sync native vis + guided)
+  // Hover → show outline/glow (and sync native vis + guide)
   Handlers.hover = Hooks.on("hoverToken", (token, hovered) => {
     token[HOVER_KEY] = hovered;
     refreshToken(token);
@@ -750,9 +732,8 @@ Hooks.on("canvasReady", () => {
       for (const t of canvas.tokens?.placeables ?? []) {
         applyNativeBorderVisibility(t);
         applyNativeTargetVisibility(t);
-        // Guided mode depends on this too
-        if (getFoundryBorderMode() === "guided") applyGuidedBorder(t);
-        else removeGuidedBorder(t);
+        if (getFoundryBorderMode() === "guide") applyGuideBorder(t);
+        else removeGuideBorder(t);
       }
       return;
     }
@@ -765,12 +746,11 @@ Hooks.on("canvasReady", () => {
         updateCombatTokenFromCombat(getActiveCombat());
       }
     } else if (setting.key === `${MODULE_ID}.combatBorderSpeed`) {
-      // Just reset alpha/dir; interval already running will pick new step
       CombatFX.alpha = MAX_COMBAT_ALPHA;
       CombatFX.dir   = -1;
     }
 
-    // For mode, enableTarget, and any color changes (including guide*)
+    // For mode, enableTarget, and any color changes
     for (const t of canvas.tokens?.placeables ?? []) {
       if (setting.key === `${MODULE_ID}.enableTarget`) {
         t[TARGET_KEY] = !!game.user?.targets?.has?.(t);
@@ -783,7 +763,7 @@ Hooks.on("canvasReady", () => {
   Handlers.refreshToken = Hooks.on("refreshToken", (token) => {
     applyNativeBorderVisibility(token);
     applyNativeTargetVisibility(token);
-    if (getFoundryBorderMode() === "guided") applyGuidedBorder(token);
+    if (getFoundryBorderMode() === "guide") applyGuideBorder(token);
   });
 
   // Clean up on token deletion
@@ -792,7 +772,7 @@ Hooks.on("canvasReady", () => {
     if (t) {
       removeGlow(t);
       removeOutline(t);
-      removeGuidedBorder(t);
+      removeGuideBorder(t);
       if (CombatFX.token && CombatFX.token === t) {
         setCombatToken(null);
       }
@@ -824,7 +804,7 @@ Hooks.on("canvasReady", () => {
     setCombatToken(null);
   });
 
-  // Initial pass across my scene tokens
+  // Initial pass across scene tokens
   const myTargets = game.user?.targets ?? new Set();
   for (const t of canvas.tokens?.placeables ?? []) {
     t[HOVER_KEY]  = !!t?.hover;
@@ -832,7 +812,7 @@ Hooks.on("canvasReady", () => {
     refreshToken(t);
   }
 
-  // If there is an active combat on this scene, start flicker
+  // If there is an active combat on this scene, start pulse
   updateCombatTokenFromCombat(getActiveCombat());
 });
 
@@ -858,11 +838,10 @@ Hooks.once("shutdown", () => {
   for (const t of canvas.tokens?.placeables ?? []) {
     removeGlow(t);
     removeOutline(t);
-    removeGuidedBorder(t);
+    removeGuideBorder(t);
   }
   Object.keys(Handlers).forEach(k => delete Handlers[k]);
   Handlers._installed = false;
 
   logOnce("shutdown", "info", "shutdown — handlers removed");
 });
-
