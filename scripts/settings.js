@@ -1,7 +1,7 @@
 const MODULE_ID = "pixie-border";
 const TEMPLATE_PATH = `modules/pixie-border/templates/colorConfig.hbs`;
 
-// Prefer per-user settings in v13+; fall back to client in v12
+// Use per-user settings in v13+; fall back to client in v12
 const PER_USER_SCOPE =
   (globalThis.CONST?.SETTING_SCOPES?.USER) || "client";
 
@@ -23,7 +23,6 @@ const COND_KEYS = [
   "conditionMidColor",
   "conditionLowColor"
 ];
-// Guide color key
 const GUIDE_KEYS = [
   "guideColor"
 ];
@@ -36,30 +35,24 @@ const COLOR_DEFAULTS = {
   targetOutlineColor: "#88ccff",
   glowColor: "#88ccff",
   targetGlowColor: "#88ccff",
+  guideColor: "#888888",
   dispositionHostileColor: "#ff3a3a",
   dispositionFriendlyColor: "#2ecc71",
   dispositionNeutralColor: "#f1c40f",
   dispositionSecretColor: "#9b59b6",
   conditionHighColor: "#2ecc71",
   conditionMidColor: "#f1c40f",
-  conditionLowColor: "#e74c3c",
-
-  // Guide border default color
-  guideColor: "#888888"
+  conditionLowColor: "#e74c3c"
 };
 
 // Normalize color objects to hex string
 function asHexString(v, fallback = "#88ccff") {
   try {
-    // If already a Foundry Color, just stringify
     if (v instanceof foundry.utils.Color) {
       return v.toString(16, "#");
     }
-
-    // Otherwise parse whatever we got
     return foundry.utils.Color.fromString(v ?? fallback).toString(16, "#");
   } catch {
-    // If it's already a plausible hex string, trust it; else fallback
     if (typeof v === "string" && /^#?[0-9a-f]{3,8}$/i.test(v)) {
       return v.startsWith("#") ? v : `#${v}`;
     }
@@ -82,7 +75,7 @@ class PixieBorderColorConfig extends FormApplication {
     });
   }
 
-  // Provide values to the template
+  // Provide values to the color config template
   async getData() {
     const g = (k) => asHexString(game.settings.get(MODULE_ID, k), COLOR_DEFAULTS[k]);
     return {
@@ -91,6 +84,7 @@ class PixieBorderColorConfig extends FormApplication {
       targetOutlineColor: g("targetOutlineColor"),
       glowColor: g("glowColor"),
       targetGlowColor: g("targetGlowColor"),
+      guideColor: g("guideColor"),
 
       // Disposition
       dispositionHostileColor: g("dispositionHostileColor"),
@@ -101,18 +95,15 @@ class PixieBorderColorConfig extends FormApplication {
       // Condition
       conditionHighColor: g("conditionHighColor"),
       conditionMidColor: g("conditionMidColor"),
-      conditionLowColor: g("conditionLowColor"),
-
-      // Guide
-      guideColor: g("guideColor")
+      conditionLowColor: g("conditionLowColor")
     };
   }
 
-  /** Wire up Reset and Cancel + live sync between color/hex inputs */
+  // Color configuration wires
   activateListeners(html) {
     super.activateListeners(html);
 
-    // Reset to defaults
+    // Reset to default
     html.find('[data-action="reset"]').on("click", async () => {
       for (const k of ALL_COLOR_KEYS) {
         const v = COLOR_DEFAULTS[k];
@@ -376,5 +367,3 @@ Hooks.once("init", () => {
     });
   }
 });
-
-
