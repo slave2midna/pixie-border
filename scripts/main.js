@@ -324,7 +324,7 @@ function removeGuideBorder(token) {
   delete token[GUIDE_KEY];
 }
 
-// Draw dashed rectangle around token bounds
+// Draw Guide Border
 function drawDashedRect(g, x, y, w, h, dash, gap) {
   const totalH = dash + gap;
   // Top
@@ -357,6 +357,7 @@ function drawDashedRect(g, x, y, w, h, dash, gap) {
   }
 }
 
+// Apply Guide Border logic
 function applyGuideBorder(token) {
   if (!token || token.destroyed) return;
   const mode = getFoundryBorderMode();
@@ -364,20 +365,16 @@ function applyGuideBorder(token) {
     removeGuideBorder(token);
     return;
   }
-
-  // Only on hover, never while controlled
   const isControlled = !!token.controlled;
   const isHovered    = !!token[HOVER_KEY] || !!token.hover;
   if (!isHovered || isControlled) {
     removeGuideBorder(token);
     return;
   }
-
-  // Create or reuse graphics
   let g = token[GUIDE_KEY];
   if (!g || g.destroyed) {
     g = new PIXI.Graphics();
-    g.zIndex = 1000; // above most things, change if needed.
+    g.zIndex = 1000; // render above most things, change if needed.
     token[GUIDE_KEY] = g;
     token.addChild(g);
     token.sortChildren?.();
@@ -410,16 +407,13 @@ function applyGuideBorder(token) {
   g.clear();
   g.lineStyle(GUIDE_WIDTH, colorInt, alpha);
 
-  if (style === "solid") {
-    // Simple solid rectangle
+  if (style === "solid") {           // Solid border
     g.drawRect(x, y, w, h);
-  } else if (style === "dotted") {
-    // Smaller dash for dotted look
+  } else if (style === "dotted") {   // Dashed border
     const dotDash = 2;
     const dotGap  = 4;
     drawDashedRect(g, x, y, w, h, dotDash, dotGap);
   } else {
-    // "dashed" or fallback
     drawDashedRect(g, x, y, w, h, GUIDE_DASH, GUIDE_GAP);
   }
 }
@@ -818,7 +812,7 @@ Hooks.on("canvasReady", () => {
     refreshToken(t);
   }
 
-  // If there is an active combat on this scene, start flicker
+  // If there is an active combat on this scene, start pulse
   updateCombatTokenFromCombat(getActiveCombat());
 });
 
@@ -851,6 +845,3 @@ Hooks.once("shutdown", () => {
 
   logOnce("shutdown", "info", "shutdown — handlers removed");
 });
-
-
-
