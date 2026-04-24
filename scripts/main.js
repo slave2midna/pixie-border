@@ -122,7 +122,7 @@ function cssToInt(color) {
  * ================================================================================= */
 
 // Disposition Color Resolver
-const DISP_MAP = { [-1]:0xe74c3c, [0]:0xf1c40f, [1]:0x2ecc71, [2]:0x3498db, [3]:0x9b59b6 };
+const DISP_MAP = { [-2]:0x9b59b6, [-1]:0xe74c3c, [0]:0xf1c40f, [1]:0x2ecc71 };
 
 function dispositionColorInt(token) {
   const disp = token?.document?.disposition ?? 0;
@@ -131,7 +131,7 @@ function dispositionColorInt(token) {
   if (disp === -1) hexStr = String(getDispHostile()  ?? "");
   else if (disp === 0) hexStr = String(getDispNeutral() ?? "");
   else if (disp === 1) hexStr = String(getDispFriendly() ?? "");
-  else if (disp === 3) hexStr = String(getDispSecret()   ?? "");
+  else if (disp === -2) hexStr = String(getDispSecret() ?? "");
 
   if (hexStr && hexStr !== "undefined") {
     const n = cssToInt(hexStr);
@@ -194,6 +194,14 @@ function resolvedGlowColorInt(token) {
     return cssToInt(String(base));
   }
   return resolvedOutlineColorInt(token);
+}
+
+function canSeePixieBorder(token) {
+  const doc = token?.document;
+  if (!doc) return true;
+  if (doc.disposition !== -2) return true;
+  if (game.user?.isGM) return true;
+  return !!doc.testUserPermission?.(game.user, "OBSERVER");
 }
 
 /* =================================================================================
@@ -641,6 +649,16 @@ function applyNativeTargetVisibility(token) {
 function refreshToken(token) {
   if (!token || token.destroyed) return;
 
+  // SECRET tokens: suppress all borders for users without permission.
+  if (!canSeePixieBorder(token)) {
+    removeOutline(token);
+    removeGlow(token);
+    removeGuideBorder(token);
+    applyNativeBorderVisibility(token);
+    applyNativeTargetVisibility(token);
+    return;
+  }
+
   const show =
     token.controlled ||
     !!token[HOVER_KEY] ||
@@ -709,18 +727,23 @@ Hooks.on("canvasReady", () => {
 
   // Token disposition changes (relevant for disposition mode)
   Handlers.updateDoc = Hooks.on("updateToken", (doc, changes) => {
-    if (getMode() !== "condition" && !("disposition" in changes)) return;
-    const t = canvas.tokens?.get(doc.id);
-    if (t) refreshToken(t);
-  });
+  const relevant =
+    "disposition" in changes ||
+    "ownership" in changes ||
+    getMode() === "condition";
+  if (!relevant) return;
+  const t = canvas.tokens?.get(doc.id);
+  if (t) refreshToken(t);
+});
 
-  // Actor HP/condition changes (relevant for condition mode)
-  Handlers.updateActor = Hooks.on("updateActor", (actor) => {
-    if (getMode() !== "condition") return;
-    for (const t of canvas.tokens?.placeables ?? []) {
-      if (t.document?.actorId === actor.id) refreshToken(t);
-    }
-  });
+// Actor HP/condition/ownership changes
+Handlers.updateActor = Hooks.on("updateActor", (actor, changes) => {
+  const ownershipChanged = "ownership" in (changes ?? {});
+  if (getMode() !== "condition" && !ownershipChanged) return;
+  for (const t of canvas.tokens?.placeables ?? []) {
+    if (t.document?.actorId === actor.id) refreshToken(t);
+  }
+});
 
   // Settings changes → update native vis or full refresh
   Handlers.updateSetting = Hooks.on("updateSetting", (setting) => {
