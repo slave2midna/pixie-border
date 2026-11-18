@@ -60,6 +60,29 @@ function asHexString(v, fallback = "#88ccff") {
   }
 }
 
+/**
+ * Attempts to retrieve a setting from the client scope specifically
+ * Used for the defaults for some user scope settings later, to migrate
+ * them to user scope.
+ * @param {string} setting - Key for the setting to retrieve
+ * @param {any} defaultValue - Default value to return
+ * @returns {any}
+ */
+function getClientSetting(setting, defaultValue) {
+	const val = game.settings.storage.get('client')[`${MODULE_ID}.${setting}`];
+
+	// If this setting was never set in the client scope, it will be undefined,
+	// which JSON.parse will fail to parse
+	if (val === undefined) return defaultValue;
+
+	try {
+		return JSON.parse(val ?? defaultValue);
+	} catch (err) {
+		console.warn(`Unable to parse client setting!  Setting:`, setting, `Value:`, val);
+		return defaultValue;
+	}
+}
+
 // Color configuration form application
 class PixieBorderColorConfig extends FormApplication {
   static get defaultOptions() {
@@ -174,7 +197,7 @@ Hooks.once("init", () => {
     scope: PER_USER_SCOPE,
     config: true,
     type: String,
-    default: "disposition",
+    default: getClientSetting("mode", "disposition"),
     choices: {
       disposition: game.i18n.localize("pixie-border.settings.mode.choices.disposition"),
       custom: game.i18n.localize("pixie-border.settings.mode.choices.custom"),
@@ -200,7 +223,7 @@ Hooks.once("init", () => {
     config: true,
     type: String,
     requiresReload: true,
-    default: "disable",
+    default: getClientSetting("foundryBorder", "disable"),
     choices: {
       disable: game.i18n.localize("pixie-border.settings.foundryBorder.choices.disable"),
       enable: game.i18n.localize("pixie-border.settings.foundryBorder.choices.enable"),
@@ -214,7 +237,7 @@ Hooks.once("init", () => {
     scope: PER_USER_SCOPE,
     config: true,
     type: Boolean,
-    default: false,
+    default: getClientSetting("hideTargetIndicator", false),
     requiresReload: true
   });
 
@@ -224,7 +247,7 @@ Hooks.once("init", () => {
     scope: PER_USER_SCOPE,
     config: true,
     type: Boolean,
-    default: false
+    default: getClientSetting("enableTarget", false)
   });
 
   // Combat border toggle
@@ -234,7 +257,7 @@ Hooks.once("init", () => {
     scope: PER_USER_SCOPE,
     config: true,
     type: Boolean,
-    default: false
+    default: getClientSetting("enableCombatBorder", false)
   });
 
   game.settings.register(MODULE_ID, "disableOutline", {
@@ -243,7 +266,7 @@ Hooks.once("init", () => {
     scope: PER_USER_SCOPE,
     config: true,
     type: Boolean,
-    default: false
+    default: getClientSetting("disableOutline", false)
   });
 
   game.settings.register(MODULE_ID, "disableGlow", {
@@ -252,7 +275,7 @@ Hooks.once("init", () => {
     scope: PER_USER_SCOPE,
     config: true,
     type: Boolean,
-    default: false
+    default: getClientSetting("disableGlow", false)
   });
 
   // Combat border speed (1–3)
@@ -262,7 +285,7 @@ Hooks.once("init", () => {
     scope: PER_USER_SCOPE,
     config: true,
     type: Number,
-    default: 2,
+    default: getClientSetting("combatBorderSpeed", 2),
     range: { min: 1, max: 3, step: 1 }
   });
 
@@ -273,7 +296,7 @@ Hooks.once("init", () => {
     scope: PER_USER_SCOPE,
     config: true,
     type: Number,
-    default: 1,
+    default: getClientSetting("thickness", 1),
     range: { min: 1, max: 5, step: 1 }
   });
 
@@ -283,7 +306,7 @@ Hooks.once("init", () => {
     scope: PER_USER_SCOPE,
     config: true,
     type: Number,
-    default: 10,
+    default: getClientSetting("glowDistance", 10),
     range: { min: 1, max: 64, step: 1 }
   });
 
@@ -293,7 +316,7 @@ Hooks.once("init", () => {
     scope: PER_USER_SCOPE,
     config: true,
     type: Number,
-    default: 3,
+    default: getClientSetting("glowOuterStrength", 3),
     range: { min: 0, max: 10, step: 0.5 }
   });
 
@@ -304,7 +327,7 @@ Hooks.once("init", () => {
     scope: PER_USER_SCOPE,
     config: true,
     type: Number,
-    default: 75,
+    default: getClientSetting("guideOpacity", 75),
     range: { min: 25, max: 100, step: 5 }
   });
 
@@ -315,7 +338,7 @@ Hooks.once("init", () => {
     scope: PER_USER_SCOPE,
     config: true,
     type: String,
-    default: "dashed",
+    default: getClientSetting("guideStyle", "dashed"),
     choices: {
       dashed: game.i18n.localize("pixie-border.settings.guideStyle.choices.dashed"),
       dotted: game.i18n.localize("pixie-border.settings.guideStyle.choices.dotted"),
